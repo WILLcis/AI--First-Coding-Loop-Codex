@@ -1,0 +1,101 @@
+# AGENTS.md — monorepo 根上下文(agent 的常驻地图,v2.1)
+
+> v2 升级:把项目知识从单文件拆成 `.agents/skills/` 体系;Codex custom agent 角色化;新增 `state/` 外置记忆。
+> **v2.1 升级**:模型无关——支持 Anthropic / OpenAI / DeepSeek / Qwen / Kimi / GLM 等任意厂商。
+> 切厂商只需 2 个 env:`LLM_PROVIDER` + `LLM_API_KEY`。详见 `docs/多模型适配.md`。
+> 任何 agent 进入项目后,**先读本文件,再按需 Read 相关 skill**。
+
+> 这是 harness 的核心文件之一。放在 monorepo 根目录。任何 agent(评审、实现、triage)
+> 都会先读它。**目标:一个全新 agent 只读本文件 + 仓库,就能独立完成一个跨服务改动
+> 并让集成测试通过。** 把方括号占位换成你项目的真实内容,并随架构演进持续更新。
+
+---
+
+## 这个仓库是什么
+[一句话:产品是什么、这个 monorepo 包含哪些部分。]
+
+## 目录结构(职责地图)
+```
+apps/        # 可部署的前端/应用    [web: Next.js;mobile: ...]
+services/    # 后端服务            [billing: Go;api: Node;ml: Python]
+packages/    # 共享库              [contracts: 跨服务类型/契约;ui;config]
+ops/         # 部署/运维脚本        [deploy.sh、rollback.sh、build_and_push.sh ...]
+scripts/     # 自动化脚本          [health_report、triage_engine、verify_triage ...]
+.github/     # CI/CD 与 AI 评审工作流
+```
+> 跨服务的接口/类型必须放在 `packages/contracts`,不要在各服务里各自复制。
+
+## 本地开发(agent 必须能复现这些命令)
+- 安装依赖:`[make bootstrap / pnpm install && go mod download && pip install -r ...]`
+- **一条命令起全栈**:`make dev`(底层:`docker compose -f docker-compose.dev.yml up`)
+- **一条命令跑集成测试**:`make test-integration`
+- 单测:`make test-unit`;E2E:`make test-e2e`
+- 类型检查/lint:`make check`
+
+## 编码规范
+- 语言版本:[Node 20 / Go 1.22 / Python 3.12]
+- 格式化:[prettier / gofmt / ruff format] — 提交前必跑,CI 会校验。
+- 错误处理:[约定,例如:服务边界返回结构化错误,日志用结构化字段不打印 PII]
+- 日志:**所有服务输出结构化日志**(JSON),字段含 `service`、`request_id`、`level`。
+  自愈环依赖这些字段做聚类——不结构化,triage 引擎就看不懂。
+- 测试:新代码必须带测试;关键路径必须有集成测试。
+
+## 安全禁区(BLOCK 级,评审会拦)
+- 不得硬编码密钥/token;用环境变量 + secrets。
+- 新端点默认必须鉴权;越权(IDOR)零容忍。
+- 用户输入到 SQL/shell/模板一律参数化/转义。
+- 不得在日志/响应中泄露 PII 或凭证。
+
+## 特性开关(强制)
+- **每个新功能必须藏在特性开关后**(见 `flags/feature-flags.ts`)。
+- 新增 flag 时:在代码里用类型安全的 key,并在 PR 描述里写明 flag 名与灰度计划。
+- 不要删旧 flag 而不清理其分支逻辑。
+
+## 部署与回滚(agent 应知道,但不要自己触发 prod)
+- 合并到 `main` 后由六阶段流水线自动部署(见 `.github/workflows/deploy.yml`)。
+- prod 启用熔断回滚:指标恶化自动回退。agent 不应手动操作 prod。
+
+## 给实现 agent 的工作约定
+1. **先出计划与风险,再写码。** 列出你识别到的失败模式、安全边界、可能的技术债。
+2. 不扩大范围;任务模板(`prompts/architect-task.md`)第 3 节之外的需求,先问架构师。
+3. 自带测试,确保 `make test-integration` 通过。
+4. 开 PR 时在描述里列出权衡点,并指出需要人类重点看的"战略风险"。
+5. 复用 `packages/contracts`,不要在服务间复制类型。
+
+## 给 triage agent 的工作约定
+- 错误来源:可观测后端(CloudWatch / Prometheus 等)+ Sentry。
+- 按错误指纹聚类、九维打分(见 `scripts/triage_engine.py` + `.agents/skills/triage-severity-scorer/SKILL.md`)。
+- 建单前先去重:用 `state/triage-history.jsonl` 识别首次/稳定/回归;已知 flake 自动降权。
+- 建议步骤遵循 `.agents/skills/pr-investigator/SKILL.md`。
+
+---
+
+## v2 新增:Skills / Agents / State / Loops
+
+### Skills(`.agents/skills/<name>/SKILL.md`)
+项目知识按域拆分。agent 看到 `description` 与 `when_to_use` 自动加载相关 skill。
+新增 skill:在 `.agents/skills/` 下建目录,登记到 `.agents/skills/README.md`。
+
+### Custom agents(`.codex/agents/<name>.toml`)
+角色化的 Codex agent + 推理分层:`explorer`(low)/`implementer`(medium)/三类 `verifier`(分层)/
+`triage-scorer`(medium)/`checker`(medium)。**写代码的 agent 不能是判断 done 的 agent**。
+
+### State(`state/`)
+agent 的外置记忆:`triage-history.jsonl`、`token-usage.jsonl`、`comprehension-log.jsonl`、
+`tasks/<id>.json`、`known-flakes.txt`。**append-only 优先**,入仓可审计。
+
+### Goal Loops(`scripts/goal_loop.py`)
+跑到一个可验证的停止条件成立为止。implementer 推一步 → checker(独立 sub-agent)判定 done。
+长任务、回归修复、CI 自愈都套这个范式。
+
+### Worktrees(`scripts/spawn_agent_worktree.sh`)
+并行 agent 任务必须用 `git worktree` 隔离 fs + 隔离 docker compose project name,
+否则集成测试一定撞车。
+
+### Token 与 Comprehension 报告
+- `scripts/token_report.py`:按 day / loop / role / model 聚合花费,集成进每日健康报告
+- `scripts/comprehension_metrics.py`:**反认知投降护栏**——comprehension-coverage、
+  pr-read-rate、agent-modification-rate 三项指标低于阈值会触发红线告警
+
+---
+*保持本文件最新是架构师的职责。它过时一天,agent 就盲一天。*

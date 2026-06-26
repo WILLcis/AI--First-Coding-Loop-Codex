@@ -1,0 +1,192 @@
+# =============================================================================
+# Reusable AI Review Workflow
+# -----------------------------------------------------------------------------
+# 让任何 repo 用 4 行 `uses:` 就能调本仓的三趟 AI 评审,不必拷贝 workflow / scripts。
+#
+# 调用方仓库的用法(示例):
+# -----------------------------------------------------------------------------
+#   # in <your-repo>/.github/workflows/pr-review.yml
+#   name: PR Review
+#   on:
+#     pull_request:
+#       branches: [main]
+#       types: [opened, synchronize, reopened, ready_for_review]
+#
+#   jobs:
+#     review:
+#       uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@main
+#       secrets:
+#         LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+#       with:
+#         provider: openai                    # anthropic | openai | deepseek | qwen | kimi | glm | ...
+#         model_default: gpt-5.5              # 全局默认模型
+#         model_security: gpt-5.5             # security 趟用旗舰
+#         model_quality: gpt-5.5
+#         model_dependency: gpt-4o-mini       # dependency 趟便宜模型即可
+#         ref: main                            # 拉哪个版本的 harness(建议钉 tag,如 v2.2)
+# -----------------------------------------------------------------------------
+# 设计:
+#   - 三趟并行 + 汇总 gate(与拷贝版 ai-review.yml 行为一致)
+#   - 把本仓 checkout 到调用方仓的 _aifcl/ 子目录,scripts/prompts 从那里读
+#   - AIFCL_PROMPTS_DIR 让 ai_review.py 知道去 _aifcl/core/prompts 找 prompt
+#   - 调用方仓的 git diff 仍在调用方仓的根 dir 里跑
+# =============================================================================
+name: AI Review (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      provider:
+        description: 'LLM provider:anthropic|openai|deepseek|qwen|kimi|glm|baichuan|siliconflow|custom'
+        type: string
+        required: false
+        default: 'anthropic'
+      base_url:
+        description: '(可选)自定义 base_url,通常 custom provider 才需要'
+        type: string
+        required: false
+        default: ''
+      model_default:
+        description: '全局默认模型(各趟未单独指定时用它)'
+        type: string
+        required: false
+        default: ''
+      model_quality:
+        description: 'quality 趟模型'
+        type: string
+        required: false
+        default: ''
+      model_security:
+        description: 'security 趟模型(建议旗舰档)'
+        type: string
+        required: false
+        default: ''
+      model_dependency:
+        description: 'dependency 趟模型(便宜即可)'
+        type: string
+        required: false
+        default: ''
+      ref:
+        description: '拉哪个版本的 AI-First Coding Loop(分支名/tag/SHA)'
+        type: string
+        required: false
+        default: 'main'
+      python_version:
+        description: 'Python 版本'
+        type: string
+        required: false
+        default: '3.12'
+      max_diff_chars:
+        description: 'diff 截断阈值(防止超大 PR 把 context 撑爆)'
+        type: string
+        required: false
+        default: '320000'
+    secrets:
+      LLM_API_KEY:
+        description: '所选 provider 的 API key'
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  quality:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout caller repo
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Checkout AI-First Coding Loop (this repo)
+        uses: actions/checkout@v4
+        with:
+          repository: WILLcis/AI--First-Coding-Loop-Codex
+          ref: ${{ inputs.ref }}
+          path: _aifcl
+      - uses: actions/setup-python@v5
+        with: { python-version: '${{ inputs.python_version }}', cache: 'pip' }
+      - run: pip install -r _aifcl/core/scripts/requirements.txt
+      - name: Pass 1 — Code Quality
+        env:
+          LLM_PROVIDER: ${{ inputs.provider }}
+          LLM_API_KEY:  ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ inputs.base_url }}
+          LLM_MODEL: ${{ inputs.model_default }}
+          LLM_MODEL_VERIFIER_QUALITY: ${{ inputs.model_quality }}
+          AIFCL_PROMPTS_DIR: _aifcl/core/prompts
+          AI_REVIEW_MAX_DIFF_CHARS: ${{ inputs.max_diff_chars }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF:  ${{ github.base_ref }}
+        run: python3 _aifcl/core/scripts/ai_review.py --pass quality
+
+  security:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/checkout@v4
+        with:
+          repository: WILLcis/AI--First-Coding-Loop-Codex
+          ref: ${{ inputs.ref }}
+          path: _aifcl
+      - uses: actions/setup-python@v5
+        with: { python-version: '${{ inputs.python_version }}', cache: 'pip' }
+      - run: pip install -r _aifcl/core/scripts/requirements.txt
+      - name: Pass 2 — Security
+        env:
+          LLM_PROVIDER: ${{ inputs.provider }}
+          LLM_API_KEY:  ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ inputs.base_url }}
+          LLM_MODEL: ${{ inputs.model_default }}
+          LLM_MODEL_VERIFIER_SECURITY: ${{ inputs.model_security }}
+          AIFCL_PROMPTS_DIR: _aifcl/core/prompts
+          AI_REVIEW_MAX_DIFF_CHARS: ${{ inputs.max_diff_chars }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF:  ${{ github.base_ref }}
+        run: python3 _aifcl/core/scripts/ai_review.py --pass security
+
+  dependency:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/checkout@v4
+        with:
+          repository: WILLcis/AI--First-Coding-Loop-Codex
+          ref: ${{ inputs.ref }}
+          path: _aifcl
+      - uses: actions/setup-python@v5
+        with: { python-version: '${{ inputs.python_version }}', cache: 'pip' }
+      - run: pip install -r _aifcl/core/scripts/requirements.txt
+      - name: Pass 3 — Dependency
+        env:
+          LLM_PROVIDER: ${{ inputs.provider }}
+          LLM_API_KEY:  ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ inputs.base_url }}
+          LLM_MODEL: ${{ inputs.model_default }}
+          LLM_MODEL_VERIFIER_DEPENDENCY: ${{ inputs.model_dependency }}
+          AIFCL_PROMPTS_DIR: _aifcl/core/prompts
+          AI_REVIEW_MAX_DIFF_CHARS: ${{ inputs.max_diff_chars }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF:  ${{ github.base_ref }}
+        run: python3 _aifcl/core/scripts/ai_review.py --pass dependency
+
+  ai-review-gate:
+    needs: [quality, security, dependency]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce all passes
+        run: |
+          for r in ${{ needs.quality.result }} ${{ needs.security.result }} ${{ needs.dependency.result }}; do
+            if [ "$r" = "failure" ]; then
+              echo "::error::AI review gate failed — 见 PR 评论。"; exit 1
+            fi
+          done
+          echo "✅ AI review gate green."

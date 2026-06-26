@@ -1,0 +1,98 @@
+# =============================================================================
+# AI 代码评审 v2.1 — 模型无关,任意 LLM 都能跑
+# -----------------------------------------------------------------------------
+# 切厂商只改 2 个 GitHub Vars/Secrets:
+#   vars.LLM_PROVIDER     (anthropic|openai|deepseek|qwen|kimi|glm|baichuan|siliconflow|custom)
+#   secrets.LLM_API_KEY   该厂商的 key
+# (可选)
+#   vars.LLM_BASE_URL     自定义/私有部署的 endpoint
+#   vars.LLM_MODEL_VERIFIER_SECURITY  per-role 模型覆盖(其他 role 同理)
+#
+# 三趟仍并行,门禁仍强制,但 v2.1 起完全不依赖厂商专用 code-review action。
+# 任何 OpenAI 兼容协议的厂商 + Anthropic 原生协议都开箱可用。
+# =============================================================================
+name: AI Review (3 passes, multi-provider)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+env:
+  # 共享配置(各 job 都吃这一份)
+  LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
+  LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+  LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  PR_NUMBER: ${{ github.event.pull_request.number }}
+  BASE_REF: ${{ github.base_ref }}
+
+jobs:
+  quality:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12', cache: 'pip' }
+      - run: pip install -r scripts/requirements.txt
+      - name: Pass 1 — Code Quality
+        env:
+          # per-role 模型覆盖(留空则用 provider preset 或 LLM_MODEL)
+          LLM_MODEL_VERIFIER_QUALITY: ${{ vars.LLM_MODEL_VERIFIER_QUALITY }}
+        run: python3 scripts/ai_review.py --pass quality
+
+  security:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12', cache: 'pip' }
+      - run: pip install -r scripts/requirements.txt
+      - name: Pass 2 — Security (用厂商旗舰模型,这一档别省)
+        env:
+          LLM_MODEL_VERIFIER_SECURITY: ${{ vars.LLM_MODEL_VERIFIER_SECURITY }}
+        run: python3 scripts/ai_review.py --pass security
+
+  dependency:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12', cache: 'pip' }
+      - run: pip install -r scripts/requirements.txt
+      - name: Pass 3 — Dependency (便宜模型即可)
+        env:
+          LLM_MODEL_VERIFIER_DEPENDENCY: ${{ vars.LLM_MODEL_VERIFIER_DEPENDENCY }}
+        run: python3 scripts/ai_review.py --pass dependency
+
+  ai-review-gate:
+    needs: [quality, security, dependency]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce all passes
+        run: |
+          results='${{ join(needs.*.result, ' ') }}'
+          echo "AI review results: $results"
+          for r in $results; do
+            if [ "$r" = "failure" ]; then
+              echo "::error::AI review gate failed — 见 PR 评论中三趟评审的 BLOCK 项。"
+              exit 1
+            fi
+          done
+          echo "✅ AI review gate green."
