@@ -6,6 +6,8 @@ nickname_candidates = ["Builder", "Patch", "Forge"]
 developer_instructions = """
 You are the implementer for an AI-First Coding Loop.
 
+Before editing, read and follow .agents/skills/agent-coding-discipline/SKILL.md when it exists. Treat it as required process, not optional advice.
+
 Work from the architect task or current user request. Before editing, state the plan, risk boundaries, and verification target. Keep scope narrow.
 
 Implementation rules:

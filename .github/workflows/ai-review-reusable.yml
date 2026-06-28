@@ -83,8 +83,8 @@ on:
         default: '320000'
     secrets:
       LLM_API_KEY:
-        description: '所选 provider 的 API key'
-        required: true
+        description: '所选 provider 的 API key;未设置时走 stub 路径'
+        required: false
 
 permissions:
   contents: read
@@ -116,7 +116,7 @@ jobs:
           LLM_MODEL_VERIFIER_QUALITY: ${{ inputs.model_quality }}
           AIFCL_PROMPTS_DIR: _aifcl/core/prompts
           AI_REVIEW_MAX_DIFF_CHARS: ${{ inputs.max_diff_chars }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           BASE_REF:  ${{ github.base_ref }}
         run: python3 _aifcl/core/scripts/ai_review.py --pass quality
@@ -144,7 +144,7 @@ jobs:
           LLM_MODEL_VERIFIER_SECURITY: ${{ inputs.model_security }}
           AIFCL_PROMPTS_DIR: _aifcl/core/prompts
           AI_REVIEW_MAX_DIFF_CHARS: ${{ inputs.max_diff_chars }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           BASE_REF:  ${{ github.base_ref }}
         run: python3 _aifcl/core/scripts/ai_review.py --pass security
@@ -172,7 +172,7 @@ jobs:
           LLM_MODEL_VERIFIER_DEPENDENCY: ${{ inputs.model_dependency }}
           AIFCL_PROMPTS_DIR: _aifcl/core/prompts
           AI_REVIEW_MAX_DIFF_CHARS: ${{ inputs.max_diff_chars }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           BASE_REF:  ${{ github.base_ref }}
         run: python3 _aifcl/core/scripts/ai_review.py --pass dependency

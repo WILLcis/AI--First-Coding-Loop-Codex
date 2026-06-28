@@ -49,7 +49,7 @@ done
 
 # 5. YAML / TOML 健全性
 if python3 -c "import yaml,glob; [yaml.safe_load(open(f)) for f in glob.glob('.github/workflows/*.yml')]" 2>/dev/null; then
-  ok "5 个 workflow YAML 合法"
+  ok "workflow YAML 合法"
 else
   bad "workflow YAML 解析失败"
 fi

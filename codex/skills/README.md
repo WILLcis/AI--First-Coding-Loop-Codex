@@ -1,7 +1,7 @@
 # Skills(v2)
 
 > 把项目知识从 prompt 字符串升级为可发现、可命名调用、按域拆分的 Skill 体系。
-> 灵感:Addy Osmani《Loop Engineering》第 3 块积木;格式参考 Codex / Codex 的 `SKILL.md` 规范。
+> 灵感:Addy Osmani《Loop Engineering》第 3 块积木;格式参考 Codex 的 `SKILL.md` 规范。
 
 ## 在你的项目里怎么放
 
@@ -12,6 +12,7 @@
 
 | 名字 | 何时用 | 谁触发 |
 |---|---|---|
+| **`agent-coding-discipline`** ★v2.4 | **任何写码 agent 动手前必读**(9 规则 + 4 失败模式 + 8 项 pre-submit) | 所有 implementer/explorer/verifier |
 | `architect-task-writer` | 把模糊想法变成结构化任务 prompt | 架构师 |
 | `pr-investigator` | 给 triage 自动工单做根因调查 | triage cron / 操作员 |
 | `feature-flag-setup` | 给新功能加一个完整 flag | implementer agent |
@@ -44,4 +45,4 @@ when_NOT_to_use: <反触发条件,防止越界>
 ## 把 skill 打成 plugin(可选)
 
 跨仓库共享时,把 `skills/<name>/` 打成 zip(扩展名 `.skill`),发布到内部 marketplace。
-**skill 是格式,plugin 是分发方式**——这条 Codex 和 Codex 一致。
+**skill 是格式,plugin 是分发方式**。

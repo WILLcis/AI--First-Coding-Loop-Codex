@@ -76,6 +76,12 @@ say "core/ → 目标仓"
 for f in "$SOURCE_DIR"/core/scripts/*; do
   safe_cp "$f" "$TARGET/${PREFIX}scripts/$(basename "$f")"
 done
+if [ -d "$SOURCE_DIR/core/scripts/perf-scenarios" ]; then
+  while IFS= read -r f; do
+    rel="${f#"$SOURCE_DIR/core/scripts/"}"
+    safe_cp "$f" "$TARGET/${PREFIX}scripts/$rel"
+  done < <(find "$SOURCE_DIR/core/scripts/perf-scenarios" -type f | sort)
+fi
 # .github/workflows/
 for f in "$SOURCE_DIR"/core/workflows/*.yml; do
   safe_cp "$f" "$TARGET/${PREFIX}.github/workflows/$(basename "$f")"
@@ -93,6 +99,12 @@ safe_cp "$SOURCE_DIR/core/state/README.md"       "$TARGET/${PREFIX}state/README.
 safe_cp "$SOURCE_DIR/core/state/known-flakes.txt" "$TARGET/${PREFIX}state/known-flakes.txt"
 mkdir -p "$TARGET/${PREFIX}state/tasks" && touch "$TARGET/${PREFIX}state/tasks/.gitkeep"
 ok "+ state/tasks/.gitkeep"
+
+# v2.4: PR 模板(自动出现在每个新 PR 描述里)
+if [ -f "$SOURCE_DIR/.github/pull_request_template.md" ]; then
+  safe_cp "$SOURCE_DIR/.github/pull_request_template.md" \
+          "$TARGET/${PREFIX}.github/pull_request_template.md"
+fi
 
 # === codex(skills + agents)===
 if [ "$NO_SKILLS" = "0" ]; then

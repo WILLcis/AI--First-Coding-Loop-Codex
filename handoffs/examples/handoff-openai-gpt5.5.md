@@ -29,7 +29,7 @@
   - 用 `bash /tmp/aifcl/tools/install.sh "$PWD" --strategy <1|2|3>` 安装
 - **安装后的目标仓目录**:
   - `AGENTS.md`(Codex 项目指令,按用户项目实际填)
-  - `.agents/skills/` 6 个 repo-scoped skill
+  - `.agents/skills/` 7 个 repo-scoped skill
   - `.codex/agents/` 7 个 Codex custom agent(TOML)
   - `state/` 外置记忆
   - `.github/workflows/` 5 个(ci / deploy / **ai-review** / daily-health / triage)
@@ -256,7 +256,7 @@ git status                                # 给用户看一眼
 git commit -m "chore: bootstrap harness v2.1 — OpenAI/GPT-5.5 edition
 
 引入 Addy Osmani《Loop Engineering》5 块积木 + 反认知投降护栏:
-- .agents/skills/ 6 个 skill,按域可发现可调用
+- .agents/skills/ 7 个 skill,按域可发现可调用
 - .codex/agents/ 7 个 custom agent,推理分层(GPT-5.5 主力 + gpt-4o-mini 探查档)
 - state/       外置记忆(triage-history/token-usage/comprehension-log)
 - scripts/     +goal_loop.py / spawn_agent_worktree.sh / token_report.py

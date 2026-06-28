@@ -1,9 +1,33 @@
-# AGENTS.md — monorepo 根上下文(agent 的常驻地图,v2.1)
+# AGENTS.md — monorepo 根上下文(agent 的常驻地图,v2.4)
 
 > v2 升级:把项目知识从单文件拆成 `.agents/skills/` 体系;Codex custom agent 角色化;新增 `state/` 外置记忆。
 > **v2.1 升级**:模型无关——支持 Anthropic / OpenAI / DeepSeek / Qwen / Kimi / GLM 等任意厂商。
 > 切厂商只需 2 个 env:`LLM_PROVIDER` + `LLM_API_KEY`。详见 `docs/多模型适配.md`。
-> 任何 agent 进入项目后,**先读本文件,再按需 Read 相关 skill**。
+> **v2.4 升级**:agent 写码行为纪律(Karpathy adapted)——任何 agent 动手前**必读** `.agents/skills/agent-coding-discipline/SKILL.md`。
+> 任何 agent 进入项目后,**先读本文件,再读 agent-coding-discipline,再按需 Read 相关任务 skill**。
+
+---
+
+## 强制行为纪律(动手前必读)
+
+**任何写码 agent**(implementer / explorer / verifier-quality 等)**动手前**,必须先读:
+- [`.agents/skills/agent-coding-discipline/SKILL.md`](.agents/skills/agent-coding-discipline/SKILL.md) — 9 条规则 + 4 个失败模式 + 8 项 pre-submit 自检
+
+简版:
+
+1. **读再写** —— 读完整文件,不要扫
+2. **想再做** —— 先说假设和 tradeoff
+3. **简单** —— 写眼前问题的最少代码
+4. **外科手术式** —— diff 像任务一样小;**不顺手 reformat**
+5. **fail-first 测试** —— 修 bug 先写失败的测试再修
+6. **goal-driven** —— 成功标准先于代码
+7. **debug 不靠猜** —— 读完整 stack、复现、一次只改一处
+8. **依赖永久** —— 标准库优先,加新依赖必说理由
+9. **沟通** —— 说做了什么、为什么、有什么顾虑;不确定的事**精确**说出来
+
+4 个失败模式(发现 = 停):Kitchen Sink / Wrong Abstraction / Optimistic Path / Runaway Refactor。
+
+PR 描述自动带 pre-submit checklist(见 `.github/pull_request_template.md`)。
 
 > 这是 harness 的核心文件之一。放在 monorepo 根目录。任何 agent(评审、实现、triage)
 > 都会先读它。**目标:一个全新 agent 只读本文件 + 仓库,就能独立完成一个跨服务改动

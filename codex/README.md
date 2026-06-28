@@ -15,10 +15,11 @@
 
 `tools/install.sh` 会自动安装到上面的 Codex 原生路径。
 
-## skills(6 个)
+## skills(7 个)
 
 每个都是 `<name>/SKILL.md`,顶部 YAML front-matter 让 agent 自动按描述触发:
 
+- `agent-coding-discipline` — 写码 agent 的行为纪律:读再写、最小改动、fail-first 测试、依赖克制
 - `architect-task-writer` — 把模糊想法变成结构化任务 prompt
 - `pr-investigator` — 对自动建的工单做根因调查
 - `feature-flag-setup` — 加新功能必走的开关流程

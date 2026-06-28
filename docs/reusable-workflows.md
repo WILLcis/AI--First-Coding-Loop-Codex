@@ -29,9 +29,11 @@ jobs:
 
 **就这些**。下一个 PR 自动跑三趟评审。
 
+> 调用方仓需要在 Settings → Actions → General → Workflow permissions 选 "Read and write permissions",否则 reusable workflow 无法评论 PR。
+
 ---
 
-## 2. 完整参数(全部可选,除了 LLM_API_KEY)
+## 2. 完整参数(LLM_API_KEY 也可选;未设置时走 stub)
 
 ```yaml
 jobs:

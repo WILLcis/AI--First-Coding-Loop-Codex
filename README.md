@@ -22,14 +22,14 @@
 ```
 AI--First-Coding-Loop-Codex/
 ├── core/                 ★ 项目无关 + 模型无关 ★ 拷进任何仓库都能跑
-│   ├── scripts/             12 个 Python/Bash 脚本(自愈环 / 评审 / loop / token / 反认知投降)
-│   ├── workflows/           5 个 GitHub Actions YAML 模板
+│   ├── scripts/             Python/Bash 脚本(自愈环 / 评审 / loop / token / perf / 反认知投降)
+│   ├── workflows/           GitHub Actions YAML 模板(默认门禁 + 可选门禁)
 │   ├── prompts/             4 份评审 + 任务 prompt(中文)
 │   ├── flags/               特性开关封装(Statsig + LocalProvider)
 │   └── state/               外置记忆的目录约定
 │
 ├── codex/               🤖 Codex 专属(SKILL + custom agent TOML)
-│   ├── skills/              6 个按域拆分的 skill(安装到 .agents/skills/)
+│   ├── skills/              7 个按域拆分的 skill(安装到 .agents/skills/)
 │   ├── agents/              7 个 Codex custom agent TOML(安装到 .codex/agents/)
 │   └── AGENTS.md.template   Codex 根上下文模板(拷到你的项目根)
 │
@@ -108,7 +108,8 @@ jobs:
     with:   { provider: openai, model_default: gpt-5.5 }
 ```
 
-**就这些**——下一个 PR 自动跑三趟评审,无需拷贝任何文件,本仓升级你 `@main` 改成 `@v2.3` 就跟上。
+**就这些**——下一个 PR 自动跑三趟评审,无需拷贝任何文件,本仓升级你 `@main` 改成 `@v2.4` 就跟上。
+> 调用方仓需要在 Settings → Actions → General → Workflow permissions 选 "Read and write permissions",否则 reusable workflow 无法评论 PR。
 完整参数、各厂商示例、与 install.sh 拷贝版的取舍,见 [`docs/reusable-workflows.md`](docs/reusable-workflows.md)。
 
 ---
