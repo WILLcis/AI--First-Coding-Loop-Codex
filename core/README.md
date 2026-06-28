@@ -17,6 +17,7 @@
 
 - `_adapters.py`:**模型适配器** — 切厂商只改 2 个 env。所有 LLM 调用单点经过这里
 - `ai_review.py`:**模型无关的三趟 PR 评审**(替代厂商专用 code-review action)
+- `local_review.sh`:**本地三趟评审 prompt 生成器** — push 前用 Codex 跑,不需要远端 API key
 - `triage_engine.py`:错误聚类 → 九维打分 → 去重 → 自动建工单
 - `verify_triage.py`:部署后复检,已解决的工单自动关
 - `health_report.py`:每日健康摘要(含 token 报告 + 周一 comprehension 报告)

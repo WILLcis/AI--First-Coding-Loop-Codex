@@ -1,5 +1,10 @@
 # Reusable Workflow:在别人的仓库里"一行调用"AI 评审
 
+> **先看一眼**:你是不是真的需要远端跑?如果只是**单人测试 / 不要 required check**,
+> 用 [`local_review.sh`](../core/scripts/local_review.sh) 在本地跑、吃本地 Codex / ChatGPT 订阅,
+> 完全不付远端 API 钱。详见 [`local-vs-remote-review.md`](local-vs-remote-review.md)。
+> 下面这套是给"有多人协作 / 要 required check / 要审计 log"场景。
+
 > AI--First-Coding-Loop-Codex 暴露了一个**GitHub Actions 可复用工作流**(`workflow_call`):
 > 任何 repo 在自己的 `.github/workflows/` 里写 4 行 `uses:` 就能拿到全套三趟 AI 评审,
 > **不需要拷贝任何文件、不需要 install.sh、未来升级只需改 ref**。
@@ -38,7 +43,7 @@ jobs:
 ```yaml
 jobs:
   review:
-    uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.2
+    uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.5
     secrets:
       LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
     with:
@@ -48,7 +53,7 @@ jobs:
       model_quality: deepseek-chat
       model_security: deepseek-reasoner   # 旗舰档
       model_dependency: deepseek-chat
-      ref: v2.2                           # 钉版本(强烈推荐,不要用 main)
+      ref: v2.5                           # 钉版本(强烈推荐,不要用 main)
       python_version: '3.12'
       max_diff_chars: '320000'            # 超大 PR 截断
 ```
@@ -121,7 +126,7 @@ with: { provider: qwen, model_default: qwen-plus, model_security: qwen-max }
 uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@main
 
 # ✅ 推荐:钉到具体 tag,主动控制升级时机
-uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.2
+uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.5
 ```
 
 每次本仓发新版后,你在目标仓发一个 PR 把 `ref:` 改成新 tag,review 看影响后再合。
