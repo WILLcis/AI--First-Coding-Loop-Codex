@@ -1,4 +1,4 @@
-# Local vs Remote 评审:不付双倍钱的架构指南(v2.5)
+# Local vs Remote 评审:不付双倍钱的架构指南(v2.6)
 
 > 一个常被忽略的问题:**reusable workflow 在 GitHub Actions 里跑,需要它自己的 LLM API key——这不是和我已有的 Codex / ChatGPT 订阅重复了吗?**
 >
@@ -53,7 +53,7 @@
 # 你刚 commit 了一些代码,push 前想评审一下
 cd <your-project>
 git fetch origin main
-bash <(curl -sSL https://raw.githubusercontent.com/WILLcis/AI--First-Coding-Loop-Codex/v2.5/core/scripts/local_review.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/WILLcis/AI--First-Coding-Loop-Codex/v2.6/core/scripts/local_review.sh)
 # 它会打印三段 prompt(quality/security/dependency),
 # 把每段贴进 Codex 一个会话,人工 review 完再 push
 ```
@@ -61,7 +61,7 @@ bash <(curl -sSL https://raw.githubusercontent.com/WILLcis/AI--First-Coding-Loop
 或者更紧凑的 one-shot 三趟:
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/WILLcis/AI--First-Coding-Loop-Codex/v2.5/core/scripts/local_review.sh) --combined
+bash <(curl -sSL https://raw.githubusercontent.com/WILLcis/AI--First-Coding-Loop-Codex/v2.6/core/scripts/local_review.sh) --combined
 # 输出一段总 prompt,让 Codex 一次跑完三趟并给 VERDICT
 ```
 

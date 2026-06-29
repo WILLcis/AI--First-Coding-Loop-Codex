@@ -97,6 +97,12 @@ done
 # state/
 safe_cp "$SOURCE_DIR/core/state/README.md"       "$TARGET/${PREFIX}state/README.md"
 safe_cp "$SOURCE_DIR/core/state/known-flakes.txt" "$TARGET/${PREFIX}state/known-flakes.txt"
+if [ -d "$SOURCE_DIR/core/state/orchestration" ]; then
+  while IFS= read -r f; do
+    rel="${f#"$SOURCE_DIR/core/state/"}"
+    safe_cp "$f" "$TARGET/${PREFIX}state/$rel"
+  done < <(find "$SOURCE_DIR/core/state/orchestration" -type f | sort)
+fi
 mkdir -p "$TARGET/${PREFIX}state/tasks" && touch "$TARGET/${PREFIX}state/tasks/.gitkeep"
 ok "+ state/tasks/.gitkeep"
 

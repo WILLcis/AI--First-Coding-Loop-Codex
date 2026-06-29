@@ -13,7 +13,7 @@
 | **image-scan-gate** | 镜像与依赖 CVE | PR + main + daily 03:00Z | CRITICAL,HIGH | Trivy | 否 |
 | **secret-scan-gate** | 提交进来的 token/key | PR + main + weekly 周一深扫 | 任意命中 | gitleaks | 否 |
 
-三个都用 **GitHub Security 标签**沉淀历史(SARIF 上传),长期可跟踪、可分配 owner、可追溯。
+三个都尽量用 **GitHub Security 标签**沉淀历史(SARIF 上传)。SARIF 上传是 best-effort:私有仓或未启用 code scanning 时,上传失败不会被误判成发现 CVE/密钥。
 
 ---
 
@@ -64,6 +64,7 @@ env(在 perf-gate.yml 或 Repo Vars):
 
 - **fs-scan**:静态扫 repo 里的依赖清单(npm/pip/go/cargo)+ Dockerfile 配置问题。不需要构建镜像,**最快**。
 - **image-scan**(matrix):对每个 Dockerfile 真构建,然后扫**镜像 layer 里**的 CVE。慢但准。
+- SARIF 上传失败不会让 gate 失败;gate 只根据 Trivy scan step 是否命中阈值判断。
 
 ### 处理 false positive / 暂无修复的 CVE
 
@@ -89,6 +90,7 @@ env(在 perf-gate.yml 或 Repo Vars):
 
 - **PR**:只扫 `BASE..HEAD` 的新增内容,**快**——专挡"刚提交进来的 token"
 - **schedule(周一 04:00 UTC)**:全仓全历史深扫,**慢但全**——补救老 commit 里的泄漏
+- SARIF 上传失败不会触发"发现密钥"评论;PR 评论只在 gitleaks 明确命中时发。
 
 ### 如果真泄漏了
 

@@ -1,9 +1,10 @@
-# AGENTS.md — monorepo 根上下文(agent 的常驻地图,v2.4)
+# AGENTS.md — monorepo 根上下文(agent 的常驻地图,v2.6)
 
 > v2 升级:把项目知识从单文件拆成 `.agents/skills/` 体系;Codex custom agent 角色化;新增 `state/` 外置记忆。
 > **v2.1 升级**:模型无关——支持 Anthropic / OpenAI / DeepSeek / Qwen / Kimi / GLM 等任意厂商。
 > 切厂商只需 2 个 env:`LLM_PROVIDER` + `LLM_API_KEY`。详见 `docs/多模型适配.md`。
 > **v2.4 升级**:agent 写码行为纪律(Karpathy adapted)——任何 agent 动手前**必读** `.agents/skills/agent-coding-discipline/SKILL.md`。
+> **v2.6 升级**:主 session 收到需求后先判断能否并行分解;可分则走 `task-decomposer` + `parallel-orchestrator`。
 > 任何 agent 进入项目后,**先读本文件,再读 agent-coding-discipline,再按需 Read 相关任务 skill**。
 
 ---
@@ -12,6 +13,16 @@
 
 **任何写码 agent**(implementer / explorer / verifier-quality 等)**动手前**,必须先读:
 - [`.agents/skills/agent-coding-discipline/SKILL.md`](.agents/skills/agent-coding-discipline/SKILL.md) — 9 条规则 + 4 个失败模式 + 8 项 pre-submit 自检
+
+## 并行优先原则(v2.6,主 session 必读)
+
+**主 session 收到任何"加 X / 改 Y / 实现 Z"的需求,第一件事不是写码,而是判断"能不能并行分解"。**
+
+- 先读 [`.agents/skills/task-decomposer/SKILL.md`](.agents/skills/task-decomposer/SKILL.md),保守判断是否可并行并产出 DAG。
+- 可并行 → 读 [`.agents/skills/parallel-orchestrator/SKILL.md`](.agents/skills/parallel-orchestrator/SKILL.md),用 Codex 可用的并行子 agent / 多 worktree 方式 fan-out → fan-in。
+- 串行 → 直接走 architect-task-writer + implementer。
+
+默认保守:有疑虑就串行。对真正可分的任务(独立 provider / 独立服务 / 无重叠目录模块),一定要并行,不要把本可同时推进的工作排成队。
 
 简版:
 
@@ -101,8 +112,9 @@ scripts/     # 自动化脚本          [health_report、triage_engine、verify_
 新增 skill:在 `.agents/skills/` 下建目录,登记到 `.agents/skills/README.md`。
 
 ### Custom agents(`.codex/agents/<name>.toml`)
-角色化的 Codex agent + 推理分层:`explorer`(low)/`implementer`(medium)/三类 `verifier`(分层)/
-`triage-scorer`(medium)/`checker`(medium)。**写代码的 agent 不能是判断 done 的 agent**。
+角色化的 Codex agent + 推理分层:`explorer`(low)/`implementer`(medium)/`subtask-implementer`(medium)/
+`merger`(medium)/三类 `verifier`(分层)/`triage-scorer`(medium)/`checker`(medium)。
+**写代码的 agent 不能是判断 done 的 agent;并行子任务不能再递归 spawn 子 agent**。
 
 ### State(`state/`)
 agent 的外置记忆:`triage-history.jsonl`、`token-usage.jsonl`、`comprehension-log.jsonl`、
@@ -115,6 +127,10 @@ agent 的外置记忆:`triage-history.jsonl`、`token-usage.jsonl`、`comprehens
 ### Worktrees(`scripts/spawn_agent_worktree.sh`)
 并行 agent 任务必须用 `git worktree` 隔离 fs + 隔离 docker compose project name,
 否则集成测试一定撞车。
+
+### Parallel Orchestration(`state/orchestration/`)
+`task-decomposer` 把需求拆成多轮 DAG,`parallel-orchestrator` 记录每轮 task/result/report。
+所有编排状态保存在 `state/orchestration/<task-id>/`,便于断点续跑和事后审计。
 
 ### Token 与 Comprehension 报告
 - `scripts/token_report.py`:按 day / loop / role / model 聚合花费,集成进每日健康报告

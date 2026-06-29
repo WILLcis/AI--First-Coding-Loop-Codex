@@ -1,6 +1,6 @@
-# Codex Custom Agents(v2.1)
+# Codex Custom Agents(v2.6)
 
-> 把"评审者"扩展为完整角色分工:explorer / implementer / 三类 verifier / triage-scorer / checker。
+> 把"评审者"扩展为完整角色分工:explorer / implementer / subtask-implementer / merger / 三类 verifier / triage-scorer / checker。
 > 关键原则:**写代码的 agent 不能是判断 done 的 agent**(Addy:maker/checker split)。
 > Codex custom agent TOML 必须包含 `name`、`description`、`developer_instructions`;
 > 模型默认继承当前 Codex 会话,每个 agent 只固定自己的推理深度与职责边界。
@@ -16,6 +16,8 @@
 |---|---|---|
 | `explorer` | low | 只读探查,快且便宜,不需要深思考 |
 | `implementer` | medium | 写码主力,需要计划、编辑与验证 |
+| `subtask-implementer` | medium | 并行子任务写码,严格只动自己的 scope |
+| `merger` | medium | 整合 N 个并行子任务产出,只 merge + 测试,不写业务代码 |
 | `verifier-quality` | medium | 关心逻辑/性能/可维护性 |
 | `verifier-security` | **high** | 安全错一次代价最大,这里值得花推理预算 |
 | `verifier-dependency` | low | 形态简单(版本/许可证),靠规则 + 轻量推理已足够 |
@@ -27,7 +29,9 @@
 | name | 典型触发 |
 |---|---|
 | explorer | architect-task-writer 调用前先探查;pr-investigator 第 1 拍 |
-| implementer | 写实现代码 + 自带测试 |
+| implementer | 写实现代码 + 自带测试(单任务) |
+| **subtask-implementer** ★v2.6 | 并行多子任务之一,worktree 隔离,严禁递归 spawn |
+| **merger** ★v2.6 | 整合 N 个 sub-agent 产出,只 git merge + 跑测试,不写业务代码 |
 | verifier-quality | ai-review.yml 第 1 趟 |
 | verifier-security | ai-review.yml 第 2 趟 |
 | verifier-dependency | ai-review.yml 第 3 趟 |

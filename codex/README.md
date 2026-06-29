@@ -15,10 +15,12 @@
 
 `tools/install.sh` 会自动安装到上面的 Codex 原生路径。
 
-## skills(7 个)
+## skills(9 个)
 
 每个都是 `<name>/SKILL.md`,顶部 YAML front-matter 让 agent 自动按描述触发:
 
+- `task-decomposer` — 主 session 收到需求后先判断是否可并行分解,输出 DAG
+- `parallel-orchestrator` — 拿 DAG 做 fan-out/fan-in,调度并行 sub-agent 与 merger
 - `agent-coding-discipline` — 写码 agent 的行为纪律:读再写、最小改动、fail-first 测试、依赖克制
 - `architect-task-writer` — 把模糊想法变成结构化任务 prompt
 - `pr-investigator` — 对自动建的工单做根因调查
@@ -27,12 +29,14 @@
 - `triage-severity-scorer` — 九维打分规则
 - `weekly-comprehension-check` — **写给人的反认知投降仪式**(agent 只能提醒,不能代做)
 
-## agents(7 个)
+## agents(9 个)
 
 | name | 模型分层定位 | Codex 配置 |
 |---|---|---|
 | explorer | 轻量只读探查 | `model_reasoning_effort = "low"` |
 | implementer | 写码主力 | `model_reasoning_effort = "medium"` |
+| subtask-implementer | 并行子任务写码 | `model_reasoning_effort = "medium"` |
+| merger | 整合并行子任务产出 | `model_reasoning_effort = "medium"` |
 | verifier-quality | 质量评审 | `model_reasoning_effort = "medium"` |
 | verifier-security | **安全评审,这里别省** | `model_reasoning_effort = "high"` |
 | verifier-dependency | 依赖/许可证扫描 | `model_reasoning_effort = "low"` |

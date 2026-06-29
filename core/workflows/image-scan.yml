@@ -1,5 +1,5 @@
 # =============================================================================
-# 镜像 / 文件系统 漏洞扫描门禁(v2.3 可选)
+# 镜像 / 文件系统 漏洞扫描门禁(v2.6 可选)
 # -----------------------------------------------------------------------------
 # 双扫:
 #   ① 文件系统(repo 本身的依赖、Dockerfile 配置)→ 不需要构建镜像
@@ -7,6 +7,9 @@
 #
 # 严重度阈值默认 CRITICAL,HIGH(可在 Repo Vars TRIVY_SEVERITY 调)
 # 任意命中 → BLOCK
+#
+# SARIF 上传是 best-effort:私有仓或未启用 code scanning 时,Upload SARIF 失败不污染门禁。
+# 门禁只根据 Trivy scan step 自己的 outcome 判定是否发现 CVE。
 #
 # 启用:拷到 .github/workflows/,即用。无需额外 secret。
 # 关闭某些已确认的 CVE:加 .trivyignore(每行一个 CVE ID),Trivy 自动读
@@ -34,22 +37,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Trivy filesystem scan(依赖 + Dockerfile 静态分析)
+      - name: Trivy filesystem scan
+        id: trivy-fs
+        continue-on-error: true
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           severity: ${{ vars.TRIVY_SEVERITY || 'CRITICAL,HIGH' }}
-          exit-code: '1'                # 命中即 fail
+          exit-code: '1'                # 命中即 step fail
           ignore-unfixed: 'true'        # 没有 fix 的 CVE 暂不挡(避免无解烦人)
           format: 'sarif'
           output: 'trivy-fs.sarif'
-      - name: Upload SARIF to GitHub Security
-        if: always()
+      - name: Upload SARIF to GitHub Security (best-effort)
+        if: always() && hashFiles('trivy-fs.sarif') != ''
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-fs.sarif'
           category: 'trivy-fs'
+      - name: Fail job if Trivy fs scan found CVEs
+        if: steps.trivy-fs.outcome == 'failure'
+        run: |
+          echo "::error::Trivy fs scan found CRITICAL/HIGH CVEs. SARIF upload is best-effort; check the run logs if Security tab is unavailable."
+          exit 1
 
   discover-dockerfiles:
     runs-on: ubuntu-latest
@@ -81,6 +92,8 @@ jobs:
           docker build -t "$tag" -f "${{ matrix.dockerfile }}" "$ctx"
           echo "IMAGE=$tag" >> $GITHUB_ENV
       - name: Trivy image scan
+        id: trivy-image
+        continue-on-error: true
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.IMAGE }}
@@ -89,12 +102,18 @@ jobs:
           ignore-unfixed: 'true'
           format: 'sarif'
           output: 'trivy-image.sarif'
-      - name: Upload SARIF
-        if: always()
+      - name: Upload SARIF (best-effort)
+        if: always() && hashFiles('trivy-image.sarif') != ''
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-image.sarif'
           category: 'trivy-image-${{ matrix.dockerfile }}'
+      - name: Fail job if Trivy image scan found CVEs
+        if: steps.trivy-image.outcome == 'failure'
+        run: |
+          echo "::error::Trivy image scan (${{ matrix.dockerfile }}) found CRITICAL/HIGH CVEs. SARIF upload is best-effort; check the run logs if Security tab is unavailable."
+          exit 1
 
   image-scan-gate:
     needs: [fs-scan, image-scan]
@@ -105,7 +124,7 @@ jobs:
         run: |
           for r in '${{ needs.fs-scan.result }}' '${{ needs.image-scan.result }}'; do
             if [ "$r" = "failure" ]; then
-              echo "::error::image-scan-gate 失败 — Security 标签里看 SARIF 详情。"
+              echo "::error::image-scan-gate 失败 — Trivy scan job failed. SARIF upload failure alone does not fail this gate."
               exit 1
             fi
           done

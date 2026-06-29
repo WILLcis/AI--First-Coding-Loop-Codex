@@ -17,7 +17,7 @@
 | 文件 | 项目预设 | LLM 预设 | 适用 |
 |---|---|---|---|
 | `handoff-new-project-template.md` | **未预填**(检查点 0 问用户) | **未预填**(检查点 0 问用户) | 任意新仓库 + 任意 LLM |
-| `handoff-upgrade-existing-project-to-codex-v2.5.md` | **未预填**(检查点 0 问用户) | 复用现有或检查点 0 指定 | 已在开发/上线项目升级到最新 Codex harness |
+| `handoff-upgrade-existing-project-to-codex-v2.6.md` | **未预填**(检查点 0 问用户) | 复用现有或检查点 0 指定 | 已在开发/上线项目升级到最新 Codex harness |
 | `examples/handoff-openai-gpt5.5.md` | 未预填 | **OpenAI / GPT-5.5** | 想用 OpenAI 的项目,省一些配置思考 |
 
 ## 写自己的接力包(给某个特定项目)

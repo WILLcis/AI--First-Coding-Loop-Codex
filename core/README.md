@@ -54,7 +54,7 @@ python3 scripts/comprehension_metrics.py --mock
 额外 3 个 workflow(不在默认 ci-gate / ai-review-gate 里,按需 opt-in):
 
 - `workflows/perf-gate.yml` + `scripts/perf_check.py` + `scripts/perf-scenarios/` — k6 p95 vs baseline
-- `workflows/image-scan.yml` — Trivy fs + image 双扫
-- `workflows/secret-scan.yml` — gitleaks PR diff + 周一全仓深扫
+- `workflows/image-scan.yml` — Trivy fs + image 双扫(SARIF 上传 best-effort)
+- `workflows/secret-scan.yml` — gitleaks PR diff + 周一全仓深扫(SARIF 上传 best-effort)
 
 详细启用步骤见 [`../docs/optional-gates.md`](../docs/optional-gates.md)。

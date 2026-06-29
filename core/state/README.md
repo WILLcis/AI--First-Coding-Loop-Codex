@@ -14,6 +14,7 @@
 | `comprehension-log.jsonl` | 每行一次自检 | **架构师本人** | comprehension_metrics.py | 反认知投降护栏的数据源 |
 | `tasks/<task-id>.json` | 单一 JSON | goal_loop.py | goal_loop (resume), 人 | 长任务的逐轮进度,可断点续 |
 | `tasks/<task-id>.md` | Markdown | architect-task-writer skill | implementer, goal_loop | 任务规约(架构师写的) |
+| `orchestration/<task-id>/` | JSON/Markdown | task-decomposer / parallel-orchestrator | subtask-implementer, merger | v2.6 并行任务编排轨迹 |
 
 ## 写入规则
 

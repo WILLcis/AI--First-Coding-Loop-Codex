@@ -29,8 +29,8 @@ AI--First-Coding-Loop-Codex/
 │   └── state/               外置记忆的目录约定
 │
 ├── codex/               🤖 Codex 专属(SKILL + custom agent TOML)
-│   ├── skills/              7 个按域拆分的 skill(安装到 .agents/skills/)
-│   ├── agents/              7 个 Codex custom agent TOML(安装到 .codex/agents/)
+│   ├── skills/              9 个按域拆分的 skill(安装到 .agents/skills/)
+│   ├── agents/              9 个 Codex custom agent TOML(安装到 .codex/agents/)
 │   └── AGENTS.md.template   Codex 根上下文模板(拷到你的项目根)
 │
 ├── handoffs/             📋 接力包模板(给 Codex 等"代你执行"的助手)
@@ -120,7 +120,7 @@ jobs:
     with:   { provider: openai, model_default: gpt-5.5 }
 ```
 
-**就这些**——下一个 PR 自动跑三趟评审,无需拷贝任何文件,本仓升级你 `@main` 改成 `@v2.5` 就跟上。
+**就这些**——下一个 PR 自动跑三趟评审,无需拷贝任何文件,本仓升级你 `@main` 改成 `@v2.6` 就跟上。
 > 调用方仓需要在 Settings → Actions → General → Workflow permissions 选 "Read and write permissions",否则 reusable workflow 无法评论 PR。
 完整参数、各厂商示例、与 install.sh 拷贝版的取舍,见 [`docs/reusable-workflows.md`](docs/reusable-workflows.md)。
 

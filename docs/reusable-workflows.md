@@ -43,7 +43,7 @@ jobs:
 ```yaml
 jobs:
   review:
-    uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.5
+    uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6
     secrets:
       LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
     with:
@@ -53,7 +53,7 @@ jobs:
       model_quality: deepseek-chat
       model_security: deepseek-reasoner   # 旗舰档
       model_dependency: deepseek-chat
-      ref: v2.5                           # 钉版本(强烈推荐,不要用 main)
+      ref: v2.6                           # 钉版本(强烈推荐,不要用 main)
       python_version: '3.12'
       max_diff_chars: '320000'            # 超大 PR 截断
 ```
@@ -126,7 +126,7 @@ with: { provider: qwen, model_default: qwen-plus, model_security: qwen-max }
 uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@main
 
 # ✅ 推荐:钉到具体 tag,主动控制升级时机
-uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.5
+uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6
 ```
 
 每次本仓发新版后,你在目标仓发一个 PR 把 `ref:` 改成新 tag,review 看影响后再合。
