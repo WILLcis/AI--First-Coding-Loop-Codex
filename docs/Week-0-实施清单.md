@@ -11,7 +11,7 @@
 不齐就一定会卡。下面这些**先全部备好**,后面 Day 0~5 全程不用再停下来等开通。
 
 - [ ] **GitHub 账号 + 组织**(建议建一个 org,不要用个人账号——后面接 Apps、OIDC、Enterprise 时会省心)
-- [ ] **Codex access token**:准备好官方 `CODEX_ACCESS_TOKEN`;远端 PR 评审会用它登录 Codex CLI
+- [ ] **Codex CI 凭证**:Pro/个人版准备 `OPENAI_API_KEY`;Business/Enterprise workspace 可准备 `CODEX_ACCESS_TOKEN`
 - [ ] **AWS 账号**(单独的根账号,后续可拆 dev/prod 子账号)+ 一张能扣费的卡;选好 region(下文以 `ap-northeast-1` 为例)
 - [ ] **Statsig 账号**:[https://console.statsig.com](https://console.statsig.com),建一个 project,记下 Server Secret Key
 - [ ] **Linear 账号**:[https://linear.app](https://linear.app),建一个 workspace,API Key 在 Settings → API
@@ -94,10 +94,11 @@
 
 按顺序做(每个 ~30 分钟):
 
-### 2.1 Codex TOKEN + 三趟 AI 评审
+### 2.1 Codex CI 凭证 + 三趟 AI 评审
 
 - [ ] 仓库 → **Settings → Secrets and variables → Actions → New repository secret**
-  - `CODEX_ACCESS_TOKEN` = 官方 Codex access token
+  - `OPENAI_API_KEY` = OpenAI Platform API key(Pro/个人版常用)
+  - 或 `CODEX_ACCESS_TOKEN` = 官方 Codex access token(Business/Enterprise)
   - Variable:`CODEX_MODEL` = 可选;留空则使用 Codex 默认模型
 - [ ] 开一个测试 PR,确认 `.github/workflows/ai-review.yml` 的三个 job(quality / security / dependency)被触发并完成
 - [ ] **把 `ai-review-gate` 加进 main 分支保护的必需检查**

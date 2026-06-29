@@ -1,6 +1,7 @@
 # 本仓用自己的 reusable workflow 评审自己的 PR——harness 哲学的字面体现。
 # 配套配置:
-#   secrets.CODEX_ACCESS_TOKEN  官方 Codex access token
+#   secrets.OPENAI_API_KEY      Pro/个人版可用
+#   secrets.CODEX_ACCESS_TOKEN  Business/Enterprise 可用
 #   vars.CODEX_MODEL            可选；不设则用 Codex 默认模型
 name: Self Review
 on:

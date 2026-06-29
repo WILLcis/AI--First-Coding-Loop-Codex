@@ -3,9 +3,10 @@
 # codex_review.sh -- Three-pass PR review through Codex CLI.
 #
 # Auth:
-#   CODEX_ACCESS_TOKEN must be configured in GitHub Actions secrets.
-#   The script logs the runner in with `codex login --with-access-token`, then
-#   runs `codex exec review` against the PR diff.
+#   Preferred for Pro/personal automation: OPENAI_API_KEY.
+#   Preferred for Business/Enterprise workspace automation: CODEX_ACCESS_TOKEN.
+#   The script logs the runner in with Codex CLI, then runs `codex exec review`
+#   against the PR diff.
 #
 # Dry run:
 #   bash scripts/codex_review.sh --pass quality --dry-run
@@ -114,15 +115,17 @@ if ! command -v codex >/dev/null 2>&1; then
   exit 2
 fi
 
-if [ -z "${CODEX_ACCESS_TOKEN:-}" ]; then
-  echo "::error::Missing CODEX_ACCESS_TOKEN. Add it as a GitHub Actions secret." >&2
-  exit 2
-fi
-
 export CODEX_HOME="${CODEX_HOME:-${RUNNER_TEMP:-$PWD/.codex-tmp}/aifcl-codex-home}"
 mkdir -p "$CODEX_HOME"
 if ! codex login status >/dev/null 2>&1; then
-  printf '%s' "$CODEX_ACCESS_TOKEN" | codex login --with-access-token >/dev/null
+  if [ -n "${CODEX_ACCESS_TOKEN:-}" ]; then
+    printf '%s' "$CODEX_ACCESS_TOKEN" | codex login --with-access-token >/dev/null
+  elif [ -n "${OPENAI_API_KEY:-}" ]; then
+    printf '%s' "$OPENAI_API_KEY" | codex login --with-api-key >/dev/null
+  else
+    echo "::error::Missing auth. Add CODEX_ACCESS_TOKEN or OPENAI_API_KEY as a GitHub Actions secret." >&2
+    exit 2
+  fi
 fi
 
 output_file="$OUTPUT_DIR/codex-review-$PASS_NAME.md"

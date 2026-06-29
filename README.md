@@ -116,11 +116,11 @@ on: { pull_request: { branches: [main] } }
 jobs:
   review:
     uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@main
-    secrets: { CODEX_ACCESS_TOKEN: ${{ secrets.CODEX_ACCESS_TOKEN }} }
-    with:   { ref: v2.6.2 }
+    secrets: { OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }} }
+    with:   { ref: v2.6.3 }
 ```
 
-**就这些**——下一个 PR 自动跑三趟评审,无需拷贝任何文件,本仓升级你 `@main` 改成 `@v2.6.2` 就跟上。
+**就这些**——下一个 PR 自动跑三趟评审,无需拷贝任何文件,本仓升级你 `@main` 改成 `@v2.6.3` 就跟上。
 > 调用方仓需要在 Settings → Actions → General → Workflow permissions 选 "Read and write permissions",否则 reusable workflow 无法评论 PR。
 完整参数、各厂商示例、与 install.sh 拷贝版的取舍,见 [`docs/reusable-workflows.md`](docs/reusable-workflows.md)。
 
@@ -128,10 +128,11 @@ jobs:
 
 ## Codex 远端评审凭证
 
-默认 AI Review 已从通用云上 LLM API key 切到 Codex CLI。只改 GitHub Repo Secrets / Variables:
+默认 AI Review 走 Codex CLI。Pro/个人版用户用 OpenAI Platform API key;Business/Enterprise workspace 也可以用 Codex access token:
 
 ```
-secrets.CODEX_ACCESS_TOKEN = 官方 Codex access token
+secrets.OPENAI_API_KEY     = OpenAI Platform API key(Pro/个人版常用)
+secrets.CODEX_ACCESS_TOKEN = 官方 Codex access token(Business/Enterprise)
 (可选)
 vars.CODEX_MODEL           = Codex 评审模型;留空则用默认
 vars.CODEX_CLI_VERSION     = @openai/codex 版本;留空则用 latest

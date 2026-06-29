@@ -16,7 +16,7 @@
 ## 关键脚本一句话
 
 - `_adapters.py`:**模型适配器** — 切厂商只改 2 个 env。所有 LLM 调用单点经过这里
-- `codex_review.sh`:**Codex TOKEN 三趟 PR 评审** — GitHub Actions 用 `CODEX_ACCESS_TOKEN` 跑门禁
+- `codex_review.sh`:**Codex CLI 三趟 PR 评审** — GitHub Actions 用 `OPENAI_API_KEY` 或 `CODEX_ACCESS_TOKEN` 跑门禁
 - `ai_review.py`:**legacy 云 LLM 三趟 PR 评审**(已不作为默认 workflow 路径)
 - `local_review.sh`:**本地三趟评审 prompt 生成器** — push 前用 Codex 跑,不需要远端 API key
 - `triage_engine.py`:错误聚类 → 九维打分 → 去重 → 自动建工单
@@ -31,10 +31,11 @@
 
 ## 远端 Codex 评审凭证
 
-默认 `ai-review.yml` 不再使用通用云上 LLM key,而是读取 GitHub Secret:
+默认 `ai-review.yml` 通过 Codex CLI 跑评审。Pro/个人版用户用 OpenAI Platform API key;Business/Enterprise workspace 可用 Codex access token:
 
 ```bash
-CODEX_ACCESS_TOKEN=<官方 Codex access token>
+OPENAI_API_KEY=<OpenAI Platform API key>
+CODEX_ACCESS_TOKEN=<官方 Codex access token>  # Business/Enterprise 可选
 CODEX_MODEL=              # 可选;不设则使用 Codex 默认模型
 ```
 

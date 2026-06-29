@@ -5,6 +5,8 @@
 > 完全不需要 GitHub Actions secret。详见 [`local-vs-remote-review.md`](local-vs-remote-review.md)。
 > 下面这套是给"多人协作 / 要 required check / 要审计 log"场景。
 
+Pro/个人版用户用 `OPENAI_API_KEY`;Business/Enterprise workspace 可用 `CODEX_ACCESS_TOKEN`。
+
 AI--First-Coding-Loop-Codex 暴露了一个**GitHub Actions 可复用工作流**(`workflow_call`):
 任何 repo 在自己的 `.github/workflows/` 里写几行 `uses:` 就能拿到全套三趟 Codex 评审,
 不需要拷贝文件,未来升级只需改 `ref`。
@@ -24,11 +26,11 @@ on:
 
 jobs:
   review:
-    uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.2
+    uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.3
     secrets:
-      CODEX_ACCESS_TOKEN: ${{ secrets.CODEX_ACCESS_TOKEN }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     with:
-      ref: v2.6.2
+      ref: v2.6.3
 ```
 
 **就这些**。下一个 PR 自动跑三趟评审。
@@ -42,13 +44,20 @@ jobs:
 ```yaml
 jobs:
   review:
-    uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.2
+    uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.3
     secrets:
-      CODEX_ACCESS_TOKEN: ${{ secrets.CODEX_ACCESS_TOKEN }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     with:
-      ref: v2.6.2
+      ref: v2.6.3
       codex_model: ''             # 可选;留空用 Codex 默认模型
       codex_cli_version: latest   # 可选;可钉 @openai/codex npm 版本
+```
+
+如果你是 Business/Enterprise workspace,也可以把上面的 secret 换成:
+
+```yaml
+secrets:
+  CODEX_ACCESS_TOKEN: ${{ secrets.CODEX_ACCESS_TOKEN }}
 ```
 
 `provider` / `base_url` / `model_*` / `LLM_API_KEY` 这些旧云上 LLM 参数仍被 workflow 接受,但已 deprecated 且不会参与评审。
@@ -89,7 +98,7 @@ jobs:
 uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@main
 
 # ✅ 推荐:钉到具体 tag,主动控制升级时机
-uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.2
+uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.3
 ```
 
 每次本仓发新版后,你在目标仓发一个 PR 把 `ref:` 改成新 tag,review 看影响后再合。
@@ -99,15 +108,21 @@ uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.y
 
 ## 6. 故障排查
 
-### "Missing CODEX_ACCESS_TOKEN"
+### "Missing auth"
 
-调用方仓没有配置 Secret。去 Settings → Secrets and variables → Actions 添加:
+调用方仓没有配置可用 Secret。Pro/个人版去 Settings → Secrets and variables → Actions 添加:
+
+```text
+OPENAI_API_KEY=<OpenAI Platform API key>
+```
+
+Business/Enterprise workspace 可以改用:
 
 ```text
 CODEX_ACCESS_TOKEN=<官方 Codex access token>
 ```
 
-不要把浏览器登录态、ChatGPT cookie、或其他非官方 token 塞进来;workflow 调的是 `codex login --with-access-token`。
+不要把浏览器登录态、ChatGPT cookie、或其他非官方 token 塞进来。
 
 ### "Resource not accessible by integration"
 

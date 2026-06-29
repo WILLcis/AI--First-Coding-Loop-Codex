@@ -1,8 +1,9 @@
 # =============================================================================
-# AI 代码评审 — Codex 会员 TOKEN 版
+# AI 代码评审 — Codex CLI 版
 # -----------------------------------------------------------------------------
 # 当前活跃路径:
-#   secrets.CODEX_ACCESS_TOKEN  官方 Codex access token
+#   secrets.OPENAI_API_KEY      Pro/个人版可用;走 OpenAI Platform 计费
+#   secrets.CODEX_ACCESS_TOKEN  Business/Enterprise workspace 可用
 #   vars.CODEX_MODEL            可选;不设则使用 Codex 默认模型
 #   vars.CODEX_CLI_VERSION      可选;默认 latest
 #
@@ -13,7 +14,7 @@
 #   vars.LLM_MODEL_VERIFIER_*
 #   python3 scripts/ai_review.py --pass <quality|security|dependency>
 # =============================================================================
-name: AI Review (Codex token)
+name: AI Review (Codex CLI)
 
 on:
   pull_request:
@@ -30,6 +31,7 @@ permissions:
 
 env:
   CODEX_ACCESS_TOKEN: ${{ secrets.CODEX_ACCESS_TOKEN }}
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   CODEX_MODEL: ${{ vars.CODEX_MODEL }}
   CODEX_CLI_VERSION: ${{ vars.CODEX_CLI_VERSION }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,5 +1,5 @@
 # =============================================================================
-# Reusable AI Review Workflow — Codex 会员 TOKEN 版
+# Reusable AI Review Workflow — Codex CLI 版
 # -----------------------------------------------------------------------------
 # 调用方仓库的用法(示例):
 #
@@ -11,11 +11,11 @@
 #
 #   jobs:
 #     review:
-#       uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.2
+#       uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.3
 #       secrets:
-#         CODEX_ACCESS_TOKEN: ${{ secrets.CODEX_ACCESS_TOKEN }}
+#         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 #       with:
-#         ref: v2.6.2
+#         ref: v2.6.3
 #
 # Legacy 云上 LLM 评审已注释停用:
 #   secrets.LLM_API_KEY
@@ -86,8 +86,11 @@ on:
         default: ''
     secrets:
       CODEX_ACCESS_TOKEN:
-        description: '官方 Codex access token;用于受信任 GitHub Actions 自动化评审'
-        required: true
+        description: 'Business/Enterprise 官方 Codex access token;用于受信任 GitHub Actions 自动化评审'
+        required: false
+      OPENAI_API_KEY:
+        description: 'OpenAI Platform API key;Pro/个人版用户用这个'
+        required: false
       LLM_API_KEY:
         description: '[deprecated] legacy LLM API key; Codex review ignores this'
         required: false
@@ -119,6 +122,7 @@ jobs:
       - name: Pass 1 — Code Quality
         env:
           CODEX_ACCESS_TOKEN: ${{ secrets.CODEX_ACCESS_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CODEX_MODEL: ${{ inputs.codex_model }}
           AIFCL_PROMPTS_DIR: _aifcl/core/prompts
           GITHUB_TOKEN: ${{ github.token }}
@@ -149,6 +153,7 @@ jobs:
       - name: Pass 2 — Security
         env:
           CODEX_ACCESS_TOKEN: ${{ secrets.CODEX_ACCESS_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CODEX_MODEL: ${{ inputs.codex_model }}
           AIFCL_PROMPTS_DIR: _aifcl/core/prompts
           GITHUB_TOKEN: ${{ github.token }}
@@ -179,6 +184,7 @@ jobs:
       - name: Pass 3 — Dependency
         env:
           CODEX_ACCESS_TOKEN: ${{ secrets.CODEX_ACCESS_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CODEX_MODEL: ${{ inputs.codex_model }}
           AIFCL_PROMPTS_DIR: _aifcl/core/prompts
           GITHUB_TOKEN: ${{ github.token }}
