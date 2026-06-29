@@ -1,17 +1,19 @@
 # =============================================================================
-# AI 代码评审 v2.1 — 模型无关,任意 LLM 都能跑
+# AI 代码评审 — Codex 会员 TOKEN 版
 # -----------------------------------------------------------------------------
-# 切厂商只改 2 个 GitHub Vars/Secrets:
-#   vars.LLM_PROVIDER     (anthropic|openai|deepseek|qwen|kimi|glm|baichuan|siliconflow|custom)
-#   secrets.LLM_API_KEY   该厂商的 key
-# (可选)
-#   vars.LLM_BASE_URL     自定义/私有部署的 endpoint
-#   vars.LLM_MODEL_VERIFIER_SECURITY  per-role 模型覆盖(其他 role 同理)
+# 当前活跃路径:
+#   secrets.CODEX_ACCESS_TOKEN  官方 Codex access token
+#   vars.CODEX_MODEL            可选;不设则使用 Codex 默认模型
+#   vars.CODEX_CLI_VERSION      可选;默认 latest
 #
-# 三趟仍并行,门禁仍强制,但 v2.1 起完全不依赖厂商专用 code-review action。
-# 任何 OpenAI 兼容协议的厂商 + Anthropic 原生协议都开箱可用。
+# Legacy 云上 LLM 评审已注释停用:
+#   vars.LLM_PROVIDER
+#   secrets.LLM_API_KEY
+#   vars.LLM_BASE_URL
+#   vars.LLM_MODEL_VERIFIER_*
+#   python3 scripts/ai_review.py --pass <quality|security|dependency>
 # =============================================================================
-name: AI Review (3 passes, multi-provider)
+name: AI Review (Codex token)
 
 on:
   pull_request:
@@ -25,14 +27,13 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
-  id-token: write
 
 env:
-  # 共享配置(各 job 都吃这一份)
-  LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
-  LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-  LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+  CODEX_ACCESS_TOKEN: ${{ secrets.CODEX_ACCESS_TOKEN }}
+  CODEX_MODEL: ${{ vars.CODEX_MODEL }}
+  CODEX_CLI_VERSION: ${{ vars.CODEX_CLI_VERSION }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_REPOSITORY: ${{ github.repository }}
   PR_NUMBER: ${{ github.event.pull_request.number }}
   BASE_REF: ${{ github.base_ref }}
 
@@ -43,14 +44,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: actions/setup-python@v5
-        with: { python-version: '3.12', cache: 'pip' }
-      - run: pip install -r scripts/requirements.txt
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Install Codex CLI
+        run: npm install -g "@openai/codex@${CODEX_CLI_VERSION:-latest}"
       - name: Pass 1 — Code Quality
-        env:
-          # per-role 模型覆盖(留空则用 provider preset 或 LLM_MODEL)
-          LLM_MODEL_VERIFIER_QUALITY: ${{ vars.LLM_MODEL_VERIFIER_QUALITY }}
-        run: python3 scripts/ai_review.py --pass quality
+        run: bash scripts/codex_review.sh --pass quality --base "$BASE_REF"
 
   security:
     if: github.event.pull_request.draft == false
@@ -58,13 +57,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: actions/setup-python@v5
-        with: { python-version: '3.12', cache: 'pip' }
-      - run: pip install -r scripts/requirements.txt
-      - name: Pass 2 — Security (用厂商旗舰模型,这一档别省)
-        env:
-          LLM_MODEL_VERIFIER_SECURITY: ${{ vars.LLM_MODEL_VERIFIER_SECURITY }}
-        run: python3 scripts/ai_review.py --pass security
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Install Codex CLI
+        run: npm install -g "@openai/codex@${CODEX_CLI_VERSION:-latest}"
+      - name: Pass 2 — Security
+        run: bash scripts/codex_review.sh --pass security --base "$BASE_REF"
 
   dependency:
     if: github.event.pull_request.draft == false
@@ -72,13 +70,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: actions/setup-python@v5
-        with: { python-version: '3.12', cache: 'pip' }
-      - run: pip install -r scripts/requirements.txt
-      - name: Pass 3 — Dependency (便宜模型即可)
-        env:
-          LLM_MODEL_VERIFIER_DEPENDENCY: ${{ vars.LLM_MODEL_VERIFIER_DEPENDENCY }}
-        run: python3 scripts/ai_review.py --pass dependency
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Install Codex CLI
+        run: npm install -g "@openai/codex@${CODEX_CLI_VERSION:-latest}"
+      - name: Pass 3 — Dependency
+        run: bash scripts/codex_review.sh --pass dependency --base "$BASE_REF"
 
   ai-review-gate:
     needs: [quality, security, dependency]
@@ -90,8 +87,8 @@ jobs:
           results='${{ join(needs.*.result, ' ') }}'
           echo "AI review results: $results"
           for r in $results; do
-            if [ "$r" = "failure" ]; then
-              echo "::error::AI review gate failed — 见 PR 评论中三趟评审的 BLOCK 项。"
+            if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
+              echo "::error::AI review gate failed — see Codex review comments and job logs."
               exit 1
             fi
           done

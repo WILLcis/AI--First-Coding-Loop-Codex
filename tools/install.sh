@@ -163,8 +163,8 @@ cat <<EOF
 下一步:
   1. 编辑 AGENTS.md 把 [占位] 换成项目真实信息
   2. 编辑 ${PREFIX}.github/workflows/ci.yml 注释掉用不到的语言 job
-  3. 在 GitHub Repo Settings 配 LLM_PROVIDER + LLM_API_KEY(详见 docs/多模型适配.md)
-  4. 跑 bash ${PREFIX}tools/verify.sh 做 5 项 sanity
+  3. 在 GitHub Repo Settings 配 CODEX_ACCESS_TOKEN(可选 vars.CODEX_MODEL)
+  4. 跑 bash ${PREFIX}tools/verify.sh 做 sanity 校验
   5. 推到分支 + 开 draft PR,自己 review 后再合 main
 ============================================================
 EOF

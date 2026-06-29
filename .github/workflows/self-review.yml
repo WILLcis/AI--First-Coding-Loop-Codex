@@ -1,8 +1,7 @@
 # 本仓用自己的 reusable workflow 评审自己的 PR——harness 哲学的字面体现。
 # 配套配置:
-#   secrets.LLM_API_KEY     可选；未设置时走 stub 路径
-#   vars.LLM_PROVIDER       默认 openai
-#   vars.LLM_MODEL          全局默认模型(例 gpt-5.5)
+#   secrets.CODEX_ACCESS_TOKEN  官方 Codex access token
+#   vars.CODEX_MODEL            可选；不设则用 Codex 默认模型
 name: Self Review
 on:
   pull_request:
@@ -14,5 +13,4 @@ jobs:
     uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@main
     secrets: inherit
     with:
-      provider: ${{ vars.LLM_PROVIDER }}
-      model_default: ${{ vars.LLM_MODEL }}
+      codex_model: ${{ vars.CODEX_MODEL }}

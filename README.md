@@ -116,30 +116,28 @@ on: { pull_request: { branches: [main] } }
 jobs:
   review:
     uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@main
-    secrets: { LLM_API_KEY: ${{ secrets.LLM_API_KEY }} }
-    with:   { provider: openai, model_default: gpt-5.5 }
+    secrets: { CODEX_ACCESS_TOKEN: ${{ secrets.CODEX_ACCESS_TOKEN }} }
+    with:   { ref: v2.6.2 }
 ```
 
-**就这些**——下一个 PR 自动跑三趟评审,无需拷贝任何文件,本仓升级你 `@main` 改成 `@v2.6` 就跟上。
+**就这些**——下一个 PR 自动跑三趟评审,无需拷贝任何文件,本仓升级你 `@main` 改成 `@v2.6.2` 就跟上。
 > 调用方仓需要在 Settings → Actions → General → Workflow permissions 选 "Read and write permissions",否则 reusable workflow 无法评论 PR。
 完整参数、各厂商示例、与 install.sh 拷贝版的取舍,见 [`docs/reusable-workflows.md`](docs/reusable-workflows.md)。
 
 ---
 
-## 切换 LLM 厂商(任意时刻,无需改代码)
+## Codex 远端评审凭证
 
-只改 GitHub Repo Variables / Secrets:
+默认 AI Review 已从通用云上 LLM API key 切到 Codex CLI。只改 GitHub Repo Secrets / Variables:
 
 ```
-vars.LLM_PROVIDER     = openai | anthropic | deepseek | qwen | kimi | glm | baichuan | siliconflow | custom
-secrets.LLM_API_KEY   = 该厂商的 key
+secrets.CODEX_ACCESS_TOKEN = 官方 Codex access token
 (可选)
-vars.LLM_BASE_URL                 私有部署 / 未预设的厂商
-vars.LLM_MODEL                     全局默认模型
-vars.LLM_MODEL_VERIFIER_SECURITY   per-role 模型覆盖(其余 role 同理)
+vars.CODEX_MODEL           = Codex 评审模型;留空则用默认
+vars.CODEX_CLI_VERSION     = @openai/codex 版本;留空则用 latest
 ```
 
-详见 [`docs/多模型适配.md`](docs/多模型适配.md)。
+`LLM_PROVIDER` / `LLM_API_KEY` 只保留给 legacy 云 LLM 脚本和非 Codex CLI 的扩展路径。
 
 ---
 

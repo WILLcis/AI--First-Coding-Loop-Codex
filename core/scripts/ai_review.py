@@ -141,7 +141,7 @@ def main() -> int:
     if args.mock:
         print(f"=== MOCK pass={pass_name} role={role} prompt_chars={len(full_prompt)} ===")
         verdict = "PASS"
-        review_body = f"[MOCK] {pass_name} pass — 假装通过,真跑时配 LLM_API_KEY 即可。"
+        review_body = f"[MOCK] {pass_name} pass — legacy 云 LLM 路径假装通过。"
     else:
         review_body = ModelAdapter.summarize(
             full_prompt, loop="ai-review", role=role,

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# verify.sh — 5 项 sanity 校验目标仓的 harness 装配完整
+# verify.sh — sanity 校验目标仓的 harness 装配完整
 # 在目标仓根目录运行:bash <path-to-this>/verify.sh
 # 不调用真实 LLM,所有 mock 模式。
 # =============================================================================
@@ -29,7 +29,7 @@ else
   bad "triage_engine 失败"
 fi
 
-# 3. ai_review.py 三趟 mock
+# 3. ai_review.py 三趟 mock(legacy 云 LLM 路径,保留兼容)
 for p in quality security dependency; do
   if python3 scripts/ai_review.py --pass $p --mock >/dev/null 2>&1; then
     ok "ai_review --pass $p mock"
@@ -38,7 +38,16 @@ for p in quality security dependency; do
   fi
 done
 
-# 4. ModelAdapter 切厂商验证(走 stub,无 key)
+# 4. Codex review wrapper dry-run(不需要 CODEX_ACCESS_TOKEN)
+for p in quality security dependency; do
+  if bash scripts/codex_review.sh --pass $p --dry-run >/dev/null 2>&1; then
+    ok "codex_review --pass $p dry-run"
+  else
+    bad "codex_review --pass $p dry-run 失败"
+  fi
+done
+
+# 5. ModelAdapter 切厂商验证(legacy 云 LLM 路径,走 stub,无 key)
 for prov in anthropic openai deepseek; do
   if LLM_PROVIDER=$prov OBSERVABILITY_BACKEND=mock python3 scripts/health_report.py >/dev/null 2>&1; then
     ok "ModelAdapter provider=$prov stub 路径 OK"
@@ -47,8 +56,9 @@ for prov in anthropic openai deepseek; do
   fi
 done
 
-# 5. YAML / TOML 健全性
-if python3 -c "import yaml,glob; [yaml.safe_load(open(f)) for f in glob.glob('.github/workflows/*.yml')]" 2>/dev/null; then
+# 6. YAML / TOML 健全性
+if python3 -c "import yaml,glob; [yaml.safe_load(open(f)) for f in glob.glob('.github/workflows/*.yml')]" 2>/dev/null || \
+   ruby -e 'require "yaml"; Dir[".github/workflows/*.yml"].each { |f| YAML.load_file(f) }' 2>/dev/null; then
   ok "workflow YAML 合法"
 else
   bad "workflow YAML 解析失败"
