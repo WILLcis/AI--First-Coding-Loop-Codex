@@ -112,6 +112,11 @@ if [ -f "$SOURCE_DIR/.github/pull_request_template.md" ]; then
           "$TARGET/${PREFIX}.github/pull_request_template.md"
 fi
 
+# tools/
+if [ -f "$SOURCE_DIR/tools/verify.sh" ]; then
+  safe_cp "$SOURCE_DIR/tools/verify.sh" "$TARGET/${PREFIX}tools/verify.sh"
+fi
+
 # === codex(skills + agents)===
 if [ "$NO_SKILLS" = "0" ]; then
   say "codex skills/agents → $TARGET/"
@@ -159,7 +164,7 @@ cat <<EOF
   1. 编辑 AGENTS.md 把 [占位] 换成项目真实信息
   2. 编辑 ${PREFIX}.github/workflows/ci.yml 注释掉用不到的语言 job
   3. 在 GitHub Repo Settings 配 LLM_PROVIDER + LLM_API_KEY(详见 docs/多模型适配.md)
-  4. 跑 bash tools/verify.sh 做 5 项 sanity
+  4. 跑 bash ${PREFIX}tools/verify.sh 做 5 项 sanity
   5. 推到分支 + 开 draft PR,自己 review 后再合 main
 ============================================================
 EOF

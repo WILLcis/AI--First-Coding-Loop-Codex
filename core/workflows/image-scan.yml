@@ -116,16 +116,35 @@ jobs:
           exit 1
 
   image-scan-gate:
-    needs: [fs-scan, image-scan]
+    needs: [fs-scan, discover-dockerfiles, image-scan]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Aggregate result
         run: |
-          for r in '${{ needs.fs-scan.result }}' '${{ needs.image-scan.result }}'; do
-            if [ "$r" = "failure" ]; then
-              echo "::error::image-scan-gate 失败 — Trivy scan job failed. SARIF upload failure alone does not fail this gate."
+          fs_result='${{ needs.fs-scan.result }}'
+          discover_result='${{ needs.discover-dockerfiles.result }}'
+          image_result='${{ needs.image-scan.result }}'
+          dockerfiles='${{ needs.discover-dockerfiles.outputs.dockerfiles }}'
+
+          if [ "$fs_result" != "success" ]; then
+            echo "::error::image-scan-gate 失败 — fs-scan result=$fs_result。SARIF 上传失败本身不会导致此处失败。"
+            exit 1
+          fi
+          if [ "$discover_result" != "success" ]; then
+            echo "::error::image-scan-gate 失败 — Dockerfile discovery result=$discover_result。"
+            exit 1
+          fi
+          if [ "$dockerfiles" = "[]" ]; then
+            if [ "$image_result" != "skipped" ]; then
+              echo "::error::image-scan-gate 失败 — 未发现 Dockerfile,但 image-scan result=$image_result。"
               exit 1
             fi
-          done
+            echo "✅ image-scan-gate green (no Dockerfiles found)."
+            exit 0
+          fi
+          if [ "$image_result" != "success" ]; then
+            echo "::error::image-scan-gate 失败 — 发现 Dockerfile,但 image-scan result=$image_result。"
+            exit 1
+          fi
           echo "✅ image-scan-gate green."
