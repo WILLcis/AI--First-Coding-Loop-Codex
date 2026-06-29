@@ -1,14 +1,12 @@
-# Reusable Workflow:在别人的仓库里"一行调用"Codex 评审
+# Reusable Workflow:在别人的仓库里"一行调用"Claude Code 评审
 
 > **先看一眼**:你是不是真的需要远端跑?如果只是**单人测试 / 不要 required check**,
-> 用 [`local_review.sh`](../core/scripts/local_review.sh) 在本地跑、吃本地 Codex 会员额度,
+> 用 [`local_review.sh`](../core/scripts/local_review.sh) 在本地跑、吃本地会话额度,
 > 完全不需要 GitHub Actions secret。详见 [`local-vs-remote-review.md`](local-vs-remote-review.md)。
 > 下面这套是给"多人协作 / 要 required check / 要审计 log"场景。
 
-Pro/个人版用户用 `OPENAI_API_KEY`;Business/Enterprise workspace 可用 `CODEX_ACCESS_TOKEN`。
-
 AI--First-Coding-Loop-Codex 暴露了一个**GitHub Actions 可复用工作流**(`workflow_call`):
-任何 repo 在自己的 `.github/workflows/` 里写几行 `uses:` 就能拿到全套三趟 Codex 评审,
+任何 repo 在自己的 `.github/workflows/` 里写几行 `uses:` 就能拿到全套三趟 Claude Code 评审,
 不需要拷贝文件,未来升级只需改 `ref`。
 
 ---
@@ -26,11 +24,11 @@ on:
 
 jobs:
   review:
-    uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.3
+    uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.4
     secrets:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
     with:
-      ref: v2.6.3
+      ref: v2.6.4
 ```
 
 **就这些**。下一个 PR 自动跑三趟评审。
@@ -44,23 +42,15 @@ jobs:
 ```yaml
 jobs:
   review:
-    uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.3
+    uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.4
     secrets:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
     with:
-      ref: v2.6.3
-      codex_model: ''             # 可选;留空用 Codex 默认模型
-      codex_cli_version: latest   # 可选;可钉 @openai/codex npm 版本
+      ref: v2.6.4
+      claude_model: ''   # 可选;留空用 Claude Code 默认模型
 ```
 
-如果你是 Business/Enterprise workspace,也可以把上面的 secret 换成:
-
-```yaml
-secrets:
-  CODEX_ACCESS_TOKEN: ${{ secrets.CODEX_ACCESS_TOKEN }}
-```
-
-`provider` / `base_url` / `model_*` / `LLM_API_KEY` 这些旧云上 LLM 参数仍被 workflow 接受,但已 deprecated 且不会参与评审。
+`OPENAI_API_KEY` / `CODEX_ACCESS_TOKEN` / `provider` / `base_url` / `model_*` / `LLM_API_KEY` 这些旧参数仍被 workflow 接受,但已 deprecated 且不会参与评审。
 
 ---
 
@@ -85,7 +75,7 @@ secrets:
 | 离线/私有 GitHub Enterprise | 不行(需访问 WILLcis 仓) | 行 |
 | 自定义 prompts/scripts | 不行(共享版) | 行 |
 | state/ 持久化(triage 历史等) | 不能(只跑评审) | 行(全套自愈环) |
-| 适合 | **只想要 Codex 评审** | 想完整 harness(自愈环、特性开关、reports) |
+| 适合 | **只想要 Claude Code 评审** | 想完整 harness(自愈环、特性开关、reports) |
 
 **最佳实践**:大部分仓用 reusable workflow 跑 AI 评审就够;少数核心仓用 install.sh 装全套自愈环。
 
@@ -98,7 +88,7 @@ secrets:
 uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@main
 
 # ✅ 推荐:钉到具体 tag,主动控制升级时机
-uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.3
+uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@v2.6.4
 ```
 
 每次本仓发新版后,你在目标仓发一个 PR 把 `ref:` 改成新 tag,review 看影响后再合。
@@ -108,21 +98,15 @@ uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.y
 
 ## 6. 故障排查
 
-### "Missing auth"
+### "Missing CLAUDE_CODE_OAUTH_TOKEN"
 
-调用方仓没有配置可用 Secret。Pro/个人版去 Settings → Secrets and variables → Actions 添加:
-
-```text
-OPENAI_API_KEY=<OpenAI Platform API key>
-```
-
-Business/Enterprise workspace 可以改用:
+调用方仓没有配置可用 Secret。去 Settings → Secrets and variables → Actions 添加:
 
 ```text
-CODEX_ACCESS_TOKEN=<官方 Codex access token>
+CLAUDE_CODE_OAUTH_TOKEN=<Claude Code OAuth token>
 ```
 
-不要把浏览器登录态、ChatGPT cookie、或其他非官方 token 塞进来。
+不要把浏览器 cookie、其他服务的 token、或旧 `OPENAI_API_KEY` / `CODEX_ACCESS_TOKEN` 当成 Claude Code token 塞进来。
 
 ### "Resource not accessible by integration"
 
@@ -135,6 +119,7 @@ CODEX_ACCESS_TOKEN=<官方 Codex access token>
 - (推荐)把本仓设为 public
 - 在调用方仓配一个 PAT 通过 secret 传给 `actions/checkout` 的 `token` 输入(需要把 reusable workflow 改造接 secret)
 
-### Codex CLI 安装失败
+### Claude Code action 没有输出 `VERDICT`
 
-workflow 默认安装 `@openai/codex@latest`。如果你需要稳定复现,把 `codex_cli_version` 钉到一个已验证版本。
+`claude_review_finish.js` 会把缺少 `VERDICT: PASS|BLOCK` 当成配置/模型输出错误并让 job 失败。
+这比静默放过更安全;看到这种错误时,优先检查 prompt 或 action 输出日志。

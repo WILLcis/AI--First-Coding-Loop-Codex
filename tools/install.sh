@@ -163,7 +163,7 @@ cat <<EOF
 下一步:
   1. 编辑 AGENTS.md 把 [占位] 换成项目真实信息
   2. 编辑 ${PREFIX}.github/workflows/ci.yml 注释掉用不到的语言 job
-  3. 在 GitHub Repo Settings 配 OPENAI_API_KEY(Pro) 或 CODEX_ACCESS_TOKEN(Business/Enterprise)
+  3. 在 GitHub Repo Settings 配 CLAUDE_CODE_OAUTH_TOKEN(可选 vars.CLAUDE_MODEL)
   4. 跑 bash ${PREFIX}tools/verify.sh 做 sanity 校验
   5. 推到分支 + 开 draft PR,自己 review 后再合 main
 ============================================================

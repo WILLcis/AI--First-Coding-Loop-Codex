@@ -1,8 +1,7 @@
 # 本仓用自己的 reusable workflow 评审自己的 PR——harness 哲学的字面体现。
 # 配套配置:
-#   secrets.OPENAI_API_KEY      Pro/个人版可用
-#   secrets.CODEX_ACCESS_TOKEN  Business/Enterprise 可用
-#   vars.CODEX_MODEL            可选；不设则用 Codex 默认模型
+#   secrets.CLAUDE_CODE_OAUTH_TOKEN  Claude Code OAuth token
+#   vars.CLAUDE_MODEL                可选；不设则用 Claude Code 默认模型
 name: Self Review
 on:
   pull_request:
@@ -14,4 +13,4 @@ jobs:
     uses: WILLcis/AI--First-Coding-Loop-Codex/.github/workflows/ai-review-reusable.yml@main
     secrets: inherit
     with:
-      codex_model: ${{ vars.CODEX_MODEL }}
+      claude_model: ${{ vars.CLAUDE_MODEL }}

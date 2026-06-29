@@ -38,7 +38,24 @@ for p in quality security dependency; do
   fi
 done
 
-# 4. Codex review wrapper dry-run(不需要 CODEX_ACCESS_TOKEN)
+# 4. Claude Code review wrapper dry-run(不需要 CLAUDE_CODE_OAUTH_TOKEN)
+for p in quality security dependency; do
+  if bash scripts/claude_review_prepare.sh --pass $p --dry-run >/dev/null 2>&1; then
+    ok "claude_review_prepare --pass $p dry-run"
+  else
+    bad "claude_review_prepare --pass $p dry-run 失败"
+  fi
+done
+tmp_review="${TMPDIR:-/tmp}/aifcl-claude-review-$$.md"
+printf 'Mock Claude review\n\nVERDICT: PASS\n' > "$tmp_review"
+if node scripts/claude_review_finish.js --pass quality --review-file "$tmp_review" >/dev/null 2>&1; then
+  ok "claude_review_finish verdict parse"
+else
+  bad "claude_review_finish verdict parse 失败"
+fi
+rm -f "$tmp_review"
+
+# 5. Codex review wrapper dry-run(legacy,不需要 CODEX_ACCESS_TOKEN)
 for p in quality security dependency; do
   if bash scripts/codex_review.sh --pass $p --dry-run >/dev/null 2>&1; then
     ok "codex_review --pass $p dry-run"
@@ -47,7 +64,7 @@ for p in quality security dependency; do
   fi
 done
 
-# 5. ModelAdapter 切厂商验证(legacy 云 LLM 路径,走 stub,无 key)
+# 6. ModelAdapter 切厂商验证(legacy 云 LLM 路径,走 stub,无 key)
 for prov in anthropic openai deepseek; do
   if LLM_PROVIDER=$prov OBSERVABILITY_BACKEND=mock python3 scripts/health_report.py >/dev/null 2>&1; then
     ok "ModelAdapter provider=$prov stub 路径 OK"
@@ -56,7 +73,7 @@ for prov in anthropic openai deepseek; do
   fi
 done
 
-# 6. YAML / TOML 健全性
+# 7. YAML / TOML 健全性
 if python3 -c "import yaml,glob; [yaml.safe_load(open(f)) for f in glob.glob('.github/workflows/*.yml')]" 2>/dev/null || \
    ruby -e 'require "yaml"; Dir[".github/workflows/*.yml"].each { |f| YAML.load_file(f) }' 2>/dev/null; then
   ok "workflow YAML 合法"

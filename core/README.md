@@ -16,7 +16,8 @@
 ## 关键脚本一句话
 
 - `_adapters.py`:**模型适配器** — 切厂商只改 2 个 env。所有 LLM 调用单点经过这里
-- `codex_review.sh`:**Codex CLI 三趟 PR 评审** — GitHub Actions 用 `OPENAI_API_KEY` 或 `CODEX_ACCESS_TOKEN` 跑门禁
+- `claude_review_prepare.sh` / `claude_review_finish.js`:**Claude Code 三趟 PR 评审** — GitHub Actions 用 `CLAUDE_CODE_OAUTH_TOKEN` 跑门禁
+- `codex_review.sh`:**legacy Codex CLI 三趟 PR 评审**(已不作为默认 workflow 路径)
 - `ai_review.py`:**legacy 云 LLM 三趟 PR 评审**(已不作为默认 workflow 路径)
 - `local_review.sh`:**本地三趟评审 prompt 生成器** — push 前用 Codex 跑,不需要远端 API key
 - `triage_engine.py`:错误聚类 → 九维打分 → 去重 → 自动建工单
@@ -29,17 +30,16 @@
 - `check_env_parity.py`:env 模板 key 集合一致性
 - `gen_release_notes.py`:AI 生成发布说明
 
-## 远端 Codex 评审凭证
+## 远端 Claude Code 评审凭证
 
-默认 `ai-review.yml` 通过 Codex CLI 跑评审。Pro/个人版用户用 OpenAI Platform API key;Business/Enterprise workspace 可用 Codex access token:
+默认 `ai-review.yml` 通过 Claude Code Action 跑评审:
 
 ```bash
-OPENAI_API_KEY=<OpenAI Platform API key>
-CODEX_ACCESS_TOKEN=<官方 Codex access token>  # Business/Enterprise 可选
-CODEX_MODEL=              # 可选;不设则使用 Codex 默认模型
+CLAUDE_CODE_OAUTH_TOKEN=<Claude Code OAuth token>
+CLAUDE_MODEL=             # 可选;不设则使用 Claude Code 默认模型
 ```
 
-`LLM_PROVIDER` / `LLM_API_KEY` 仍保留给 legacy 脚本、triage/health 等非 Codex CLI 路径。
+`OPENAI_API_KEY` / `CODEX_ACCESS_TOKEN` / `LLM_PROVIDER` / `LLM_API_KEY` 仍保留给 legacy 脚本、triage/health 等非 Claude Code 路径。
 
 ## 本地 5 项 sanity(无需任何 API key)
 
@@ -48,6 +48,7 @@ python3 scripts/check_env_parity.py /dev/null /dev/null    # 编程友好示例
 OBSERVABILITY_BACKEND=mock TRACKER=github-dryrun python3 scripts/triage_engine.py
 python3 scripts/ai_review.py --pass quality --mock
 bash scripts/codex_review.sh --pass quality --dry-run
+bash scripts/claude_review_prepare.sh --pass quality --dry-run
 python3 scripts/token_report.py --days 1 || echo "(空也 OK)"
 python3 scripts/comprehension_metrics.py --mock
 ```
