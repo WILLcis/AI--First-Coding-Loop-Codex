@@ -12,7 +12,7 @@
 ## 强制行为纪律(动手前必读)
 
 **任何写码 agent**(implementer / explorer / verifier-quality 等)**动手前**,必须先读:
-- [`.agents/skills/agent-coding-discipline/SKILL.md`](.agents/skills/agent-coding-discipline/SKILL.md) — 9 条规则 + 4 个失败模式 + 8 项 pre-submit 自检
+- [`.agents/skills/agent-coding-discipline/SKILL.md`](.agents/skills/agent-coding-discipline/SKILL.md) — 10 条规则 + 4 个失败模式 + 9 项 pre-submit 自检
 
 ## 并行优先原则(v2.6,主 session 必读)
 
@@ -23,6 +23,8 @@
 - 串行 → 直接走 architect-task-writer + implementer。
 
 默认保守:有疑虑就串行。对真正可分的任务(独立 provider / 独立服务 / 无重叠目录模块),一定要并行,不要把本可同时推进的工作排成队。
+
+**持续推进原则**:小步实现、测试先行、每步可验证,不等于每步都停下来等人。没有遇到必须人工决断的问题前,开发应持续推进到可验证停止条件成立。并行开发时,某个子 session 需要人工决断,只暂停这个子 session 并报告 blocker;其他无 blocker 的子 session 继续原样开发、测试、返回结果。
 
 简版:
 
@@ -35,6 +37,7 @@
 7. **debug 不靠猜** —— 读完整 stack、复现、一次只改一处
 8. **依赖永久** —— 标准库优先,加新依赖必说理由
 9. **沟通** —— 说做了什么、为什么、有什么顾虑;不确定的事**精确**说出来
+10. **持续推进** —— 无人工决断 blocker 时不要中断;局部 blocked 不拖停其它子 session
 
 4 个失败模式(发现 = 停):Kitchen Sink / Wrong Abstraction / Optimistic Path / Runaway Refactor。
 

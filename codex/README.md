@@ -21,7 +21,7 @@
 
 - `task-decomposer` — 主 session 收到需求后先判断是否可并行分解,输出 DAG
 - `parallel-orchestrator` — 拿 DAG 做 fan-out/fan-in,调度并行 sub-agent 与 merger
-- `agent-coding-discipline` — 写码 agent 的行为纪律:读再写、最小改动、fail-first 测试、依赖克制
+- `agent-coding-discipline` — 写码 agent 的行为纪律:读再写、最小改动、fail-first 测试、依赖克制、持续推进
 - `architect-task-writer` — 把模糊想法变成结构化任务 prompt
 - `pr-investigator` — 对自动建的工单做根因调查
 - `feature-flag-setup` — 加新功能必走的开关流程

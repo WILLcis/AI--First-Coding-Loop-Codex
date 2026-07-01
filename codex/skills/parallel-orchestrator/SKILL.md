@@ -10,6 +10,13 @@ when_NOT_to_use: 单任务或没有并行子任务——直接走 implementer。
 > 你(主 session)是指挥官。不要自己写代码。实施靠 `subtask-implementer`,整合靠 `merger`。
 > 你的责任是正确地 fan-out / 等待 / fan-in / 决定下一轮。
 
+## 持续推进原则
+
+- 小步实现、测试先行、每步可验证,不等于每步都停下来等人。
+- fan-out 后,各子 session 应持续开发到自己的 `verifies` 通过或遇到明确 blocker。
+- 如果某个子 session 需要人工决断,只把这个子 session 标记为 `blocked`,记录 blocker 和需要人判断的问题;**不要取消或暂停同轮其它无 blocker 的子 session**。
+- 主 session 继续收集其它子任务结果。只有全局方向受影响(共享契约冲突、无法自动 merge、整体验收策略需要改)时,才让主 session 停下来请求人工判断。
+
 ## 主循环
 
 ```python
@@ -46,10 +53,17 @@ for round in dag.rounds:
     for sub, res in zip(round.subtasks, results):
         write(f"{round_dir}/{sub.id}.result.md", res)
 
+    blocked = [res for res in results if res.status == "blocked"]
+    done = [res for res in results if res.status == "done"]
+
+    # 局部 blocked 不取消其它子任务;已完成的仍然进入 fan-in 记录。
+    if blocked:
+        write(f"{round_dir}/blocked-report.md", summarize_blockers(blocked))
+
     merge_report = run_subtask({
         "agent": "merger",
         "description": f"integrate-round-{round.round}",
-        "prompt": build_merger_prompt(round_dir, round.subtasks)
+        "prompt": build_merger_prompt(round_dir, done)
     })
 
     if merge_report.has_conflicts:
@@ -130,7 +144,8 @@ Round <N> 的 <K> 个并行子任务已完成。请整合并报告。
 2. 按顺序 git merge 每个 sub 分支。
 3. 每次 merge 后跑一次指定验证。
 4. 任意 merge 冲突 / 测试 fail -> 立即 STOP,报告给主 session,不要尝试自动解。
-5. 全部 OK -> 写 round-report.md 汇总,返回 has_conflicts=false。
+5. 已标记 `blocked` 的子任务不要强行 merge;把 blocker 写进 round-report,等待主 session/人工决断。
+6. 全部 OK -> 写 round-report.md 汇总,返回 has_conflicts=false。
 
 ## 严禁
 - 修改任何业务代码。merger 只整合,不写。
@@ -150,6 +165,7 @@ Round <N> 的 <K> 个并行子任务已完成。请整合并报告。
 
 - N 个 sub-agent 没有 worktree 隔离。
 - 派发后用消息 1/2/3 串行调用。
+- 一个子任务 blocked 就取消整轮其它子任务。
 - merger 擅自修冲突。
 - 同一文件被多个 sub.scope 包含。
 
