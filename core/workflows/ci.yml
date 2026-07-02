@@ -6,6 +6,7 @@
 #
 # 适配:多语言 monorepo(TS/Node、Go/Java、Python)。各语言 job 用 paths 过滤,
 #       只有相关代码变更时才跑——既快又不漏。
+#       docs-only PR 只跑 changes + ci-gate,不跑测试/构建/集成验证,避免浪费 CI。
 #
 # 工具可替换:GitHub Actions → GitLab CI / Azure DevOps;Playwright → Cypress 等。
 # =============================================================================
@@ -32,6 +33,8 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
+      docs: ${{ steps.filter.outputs.docs }}
+      non_docs: ${{ steps.filter.outputs.non_docs }}
       node: ${{ steps.filter.outputs.node }}
       go: ${{ steps.filter.outputs.go }}
       python: ${{ steps.filter.outputs.python }}
@@ -41,6 +44,27 @@ jobs:
         id: filter
         with:
           filters: |
+            docs:
+              - '*.md'
+              - '*.mdx'
+              - '**/*.md'
+              - '**/*.mdx'
+              - '.github/**/*.md'
+              - 'docs/**'
+              - 'handoffs/**'
+              - 'codex/**/*.md'
+              - 'codex/**/*.md.template'
+            non_docs:
+              - '**'
+              - '!*.md'
+              - '!*.mdx'
+              - '!**/*.md'
+              - '!**/*.mdx'
+              - '!.github/**/*.md'
+              - '!docs/**'
+              - '!handoffs/**'
+              - '!codex/**/*.md'
+              - '!codex/**/*.md.template'
             node:
               - 'apps/**/*.{ts,tsx,js,jsx}'
               - 'packages/**'
@@ -123,9 +147,9 @@ jobs:
   # agent 必须能本地复现这一步(见 AGENTS.md),否则无法自我验证
   # ---------------------------------------------------------------------------
   integration:
-    needs: [node-quality, go-quality, python-quality]
+    needs: [changes, node-quality, go-quality, python-quality]
     # always() 让本 job 在上游被 skip(无相关变更)时仍能运行
-    if: always() && !contains(needs.*.result, 'failure')
+    if: always() && needs.changes.outputs.non_docs == 'true' && !contains(needs.*.result, 'failure')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -142,7 +166,7 @@ jobs:
   # ---------------------------------------------------------------------------
   docker-build:
     needs: changes
-    if: always() && !contains(needs.*.result, 'failure')
+    if: always() && needs.changes.outputs.non_docs == 'true' && !contains(needs.*.result, 'failure')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -160,8 +184,8 @@ jobs:
   # 端到端测试(Playwright)
   # ---------------------------------------------------------------------------
   e2e:
-    needs: [integration, docker-build]
-    if: always() && !contains(needs.*.result, 'failure')
+    needs: [changes, integration, docker-build]
+    if: always() && needs.changes.outputs.non_docs == 'true' && !contains(needs.*.result, 'failure')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -186,6 +210,8 @@ jobs:
   # 环境一致性检查:dev/prod 配置不漂移、必需的 secrets/env key 齐全
   # ---------------------------------------------------------------------------
   env-parity:
+    needs: changes
+    if: needs.changes.outputs.non_docs == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -201,7 +227,7 @@ jobs:
   # 任意上游失败 → 红。这样不必在分支保护里逐个勾选 job。
   # ---------------------------------------------------------------------------
   ci-gate:
-    needs: [node-quality, go-quality, python-quality, integration, docker-build, e2e, env-parity]
+    needs: [changes, node-quality, go-quality, python-quality, integration, docker-build, e2e, env-parity]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -209,6 +235,11 @@ jobs:
         run: |
           results='${{ join(needs.*.result, ' ') }}'
           echo "Upstream results: $results"
+          if [ "${{ needs.changes.outputs.non_docs }}" != "true" ]; then
+            echo "docs-only change detected; skipping CI validation by policy."
+            echo "✅ CI gate green."
+            exit 0
+          fi
           for r in $results; do
             if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
               echo "::error::CI gate failed — a required job did not pass."

@@ -69,6 +69,7 @@ scripts/     # 自动化脚本          [health_report、triage_engine、verify_
 - **一条命令跑集成测试**:`make test-integration`
 - 单测:`make test-unit`;E2E:`make test-e2e`
 - 类型检查/lint:`make check`
+- **docs-only 例外**:如果 PR 只改文档/说明/markdown/handbook,不需要跑完整 CI 验证;CI 会通过 docs-only path 直接让 `ci-gate` 绿,避免浪费 runner。
 
 ## 编码规范
 - 语言版本:[Node 20 / Go 1.22 / Python 3.12]
@@ -96,7 +97,7 @@ scripts/     # 自动化脚本          [health_report、triage_engine、verify_
 ## 给实现 agent 的工作约定
 1. **先出计划与风险,再写码。** 列出你识别到的失败模式、安全边界、可能的技术债。
 2. 不扩大范围;任务模板(`prompts/architect-task.md`)第 3 节之外的需求,先问架构师。
-3. 自带测试,确保 `make test-integration` 通过。
+3. 自带测试,确保 `make test-integration` 通过;纯文档变更按 docs-only 例外处理,不要为了文档跑重 CI。
 4. 开 PR 时在描述里列出权衡点,并指出需要人类重点看的"战略风险"。
 5. 复用 `packages/contracts`,不要在服务间复制类型。
 

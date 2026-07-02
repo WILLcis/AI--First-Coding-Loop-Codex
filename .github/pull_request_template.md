@@ -29,6 +29,7 @@
 - [ ] 每个**新依赖都有理由**,标准库不够才加(Rule 8 — Dependencies)
 - [ ] 我**说明了做了什么、为什么、有什么顾虑**(Rule 9 — Communication)
 - [ ] 没有人工决断 blocker 时,我**持续推进到可验证停止条件**,没有习惯性中断(Rule 10 — Continuous execution)
+- [ ] 如果这是 docs-only PR,我确认只改文档/说明/markdown/handbook,不要求跑重 CI
 
 ## 4 个失败模式自查(发现 = 停下来,不要硬上)
 

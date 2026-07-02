@@ -62,3 +62,7 @@ python3 scripts/comprehension_metrics.py --mock
 - `workflows/secret-scan.yml` — gitleaks PR diff + 周一全仓深扫(SARIF 上传 best-effort)
 
 详细启用步骤见 [`../docs/optional-gates.md`](../docs/optional-gates.md)。
+
+## docs-only CI 策略
+
+`workflows/ci.yml` 会识别只改文档/说明/markdown/handbook 的 PR。docs-only 时只跑 `changes` + `ci-gate`,跳过类型检查、单测、集成测试、Docker 构建、E2E 与 env parity,避免为纯文档上传浪费 CI runner。
